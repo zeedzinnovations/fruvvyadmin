@@ -17,22 +17,22 @@ function Uploads({ activeForm }) {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/get-categories")
+    fetch("https://fruvvyadmin.onrender.com/api/get-categories")
       .then((res) => res.json())
       .then((data) => setCategories(data));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/get-products")
+    fetch("https://fruvvyadmin.onrender.com/api/get-products")
       .then((res) => res.json())
       .then((data) => setProducts(data));
   }, []);
 
- 
+
   const uploadToCloudinary = async (file, folder) => {
     try {
       const sigRes = await fetch(
-        `http://localhost:5000/api/cloudinary-signature?folder=${folder}`
+        `https://fruvvyadmin.onrender.com/api/cloudinary-signature?folder=${folder}`
       );
       const sig = await sigRes.json();
 
@@ -58,7 +58,7 @@ function Uploads({ activeForm }) {
     }
   };
 
- 
+
   const submitCategory = async () => {
     if (!categoryName) return alert("Enter category name");
 
@@ -70,7 +70,7 @@ function Uploads({ activeForm }) {
       );
     }
 
-    await fetch("http://localhost:5000/api/categories", {
+    await fetch("https://fruvvyadmin.onrender.com/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: categoryName, image_url: imageUrl }),
@@ -81,11 +81,11 @@ function Uploads({ activeForm }) {
     setCategoryImage(null);
     setCategoryPreview("");
 
-    const res = await fetch("http://localhost:5000/api/get-categories");
+    const res = await fetch("https://fruvvyadmin.onrender.com/api/get-categories");
     setCategories(await res.json());
   };
 
-
+ 
   const submitProduct = async () => {
     if (!productName || !categoryId) return alert("Fill required fields");
 
@@ -97,7 +97,7 @@ function Uploads({ activeForm }) {
       );
     }
 
-    await fetch("http://localhost:5000/api/products", {
+    await fetch("https://fruvvyadmin.onrender.com/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -121,7 +121,7 @@ function Uploads({ activeForm }) {
     setProductImage(null);
     setProductPreview("");
 
-    const res = await fetch("http://localhost:5000/api/get-products");
+    const res = await fetch("https://fruvvyadmin.onrender.com/api/get-products");
     setProducts(await res.json());
   };
 
@@ -136,7 +136,7 @@ function Uploads({ activeForm }) {
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
       {activeForm === "category" && (
-        <div className="w-112 bg-white border-2 border-green-700 rounded-xl p-8">
+        <div className="w-md bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
             Add Category
           </h2>
