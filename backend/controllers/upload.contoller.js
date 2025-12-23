@@ -1,23 +1,40 @@
-import crypto from "crypto";
+import cloudinary from "cloudinary";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export const getCloudinarySignature = (req, res) => {
-  const timestamp = Math.round(Date.now() / 1000);
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = req.query.folder;
 
+    if (!folder) {
+      return res.status(400).json({ message: "Folder is required" });
+    }
 
-  const folder = req.query.folder || "fruvvy_images";
+    const signature = cloudinary.v2.utils.api_sign_request(
+      {
+        timestamp,
+        folder,
+      },
+      process.env.CLOUDINARY_API_SECRET
+    );
 
-  const signature = crypto
-    .createHash("sha1")
-    .update(
-      `folder=${folder}&timestamp=${timestamp}${process.env.CLOUDINARY_API_SECRET}`
-    )
-    .digest("hex");
-
-  res.json({
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-    timestamp,
-    signature,
-    folder,
-  });
+    res.json({
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      timestamp,
+      signature,
+      folder,
+    });
+  } catch (error) {
+    console.error("Cloudinary signature error:", error);
+    res.status(500).json({ message: "Failed to generate signature" });
+  }
 };

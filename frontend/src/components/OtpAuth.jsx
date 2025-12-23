@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from "react";
 
-export default function OtpAuth() {
+function OtpAuth() {
   const [otpList, setOtpList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const API = import.meta.env.VITE_APP_BACKEND_URL;
+
+  const API = import.meta.env.VITE_API_URL;
+
 
   useEffect(() => {
-    async function fetchOTPs() {
+    const fetchOTPs = async () => {
       try {
         const res = await fetch(`${API}/devapiService/getOtpList`);
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch OTP list");
+        }
+
         const data = await res.json();
         setOtpList(data);
-      } catch (err) {
-        console.error("Error fetching OTPs", err);
+      } catch (error) {
+        console.error("Error fetching OTP list:", error);
       }
-    }
+    };
 
     fetchOTPs();
+
+ 
     const interval = setInterval(fetchOTPs, 10000);
     return () => clearInterval(interval);
-  }, [API]);
+  }, []);
 
   const filteredOTPList = otpList.filter((otp) =>
     String(otp.phone_number).includes(searchTerm)
@@ -32,6 +41,7 @@ export default function OtpAuth() {
         OTP List
       </h2>
 
+     
       <input
         type="text"
         placeholder="Search by phone number..."
@@ -40,6 +50,7 @@ export default function OtpAuth() {
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
+      {/* OTP Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-200">
           <thead>
@@ -53,7 +64,9 @@ export default function OtpAuth() {
           <tbody>
             {filteredOTPList.map((otp, index) => (
               <tr key={index}>
-                <td className="px-4 py-2 border">{otp.phone_number}</td>
+                <td className="px-4 py-2 border">
+                  {otp.phone_number}
+                </td>
                 <td className="px-4 py-2 border">{otp.otp}</td>
                 <td className="px-4 py-2 border">
                   {new Date(otp.created_at).toLocaleString()}
@@ -64,7 +77,7 @@ export default function OtpAuth() {
             {filteredOTPList.length === 0 && (
               <tr>
                 <td colSpan="3" className="text-center py-4">
-                  No OTPs found.
+                  No OTPs found
                 </td>
               </tr>
             )}
@@ -74,3 +87,5 @@ export default function OtpAuth() {
     </section>
   );
 }
+
+export default OtpAuth;

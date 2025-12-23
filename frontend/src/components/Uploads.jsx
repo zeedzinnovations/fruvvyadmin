@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function Uploads({ activeForm }) {
   const [categoryName, setCategoryName] = useState("");
   const [categoryImage, setCategoryImage] = useState(null);
@@ -16,23 +18,27 @@ function Uploads({ activeForm }) {
   const [productPreview, setProductPreview] = useState("");
   const [products, setProducts] = useState([]);
 
+  // Fetch categories
   useEffect(() => {
-    fetch("https://fruvvyadmin.onrender.com/api/get-categories")
+    fetch(`${API_URL}/api/get-categories`)
       .then((res) => res.json())
-      .then((data) => setCategories(data));
+      .then(setCategories)
+      .catch(console.error);
   }, []);
 
+  // Fetch products
   useEffect(() => {
-    fetch("https://fruvvyadmin.onrender.com/api/get-products")
+    fetch(`${API_URL}/api/get-products`)
       .then((res) => res.json())
-      .then((data) => setProducts(data));
+      .then(setProducts)
+      .catch(console.error);
   }, []);
 
-
+  // Cloudinary upload
   const uploadToCloudinary = async (file, folder) => {
     try {
       const sigRes = await fetch(
-        `https://fruvvyadmin.onrender.com/api/cloudinary-signature?folder=${folder}`
+        `${API_URL}/api/cloudinary-signature?folder=${folder}`
       );
       const sig = await sigRes.json();
 
@@ -45,7 +51,10 @@ function Uploads({ activeForm }) {
 
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
-        { method: "POST", body: formData }
+        {
+          method: "POST",
+          body: formData,
+        }
       );
 
       if (!uploadRes.ok) throw new Error("Upload failed");
@@ -53,12 +62,13 @@ function Uploads({ activeForm }) {
       const data = await uploadRes.json();
       return data.secure_url;
     } catch (err) {
+      console.error(err);
       alert("Cloudinary upload failed");
       return "";
     }
   };
 
-
+  // Submit category
   const submitCategory = async () => {
     if (!categoryName) return alert("Enter category name");
 
@@ -70,10 +80,13 @@ function Uploads({ activeForm }) {
       );
     }
 
-    await fetch("https://fruvvyadmin.onrender.com/api/categories", {
+    await fetch(`${API_URL}/api/categories`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: categoryName, image_url: imageUrl }),
+      body: JSON.stringify({
+        name: categoryName,
+        image_url: imageUrl,
+      }),
     });
 
     alert("Category added");
@@ -81,13 +94,14 @@ function Uploads({ activeForm }) {
     setCategoryImage(null);
     setCategoryPreview("");
 
-    const res = await fetch("https://fruvvyadmin.onrender.com/api/get-categories");
+    const res = await fetch(`${API_URL}/api/get-categories`);
     setCategories(await res.json());
   };
 
- 
+  // Submit product
   const submitProduct = async () => {
-    if (!productName || !categoryId) return alert("Fill required fields");
+    if (!productName || !categoryId)
+      return alert("Fill required fields");
 
     let imageUrl = "";
     if (productImage) {
@@ -97,7 +111,7 @@ function Uploads({ activeForm }) {
       );
     }
 
-    await fetch("https://fruvvyadmin.onrender.com/api/products", {
+    await fetch(`${API_URL}/api/products`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -121,7 +135,7 @@ function Uploads({ activeForm }) {
     setProductImage(null);
     setProductPreview("");
 
-    const res = await fetch("https://fruvvyadmin.onrender.com/api/get-products");
+    const res = await fetch(`${API_URL}/api/get-products`);
     setProducts(await res.json());
   };
 
@@ -136,7 +150,7 @@ function Uploads({ activeForm }) {
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
       {activeForm === "category" && (
-        <div className="w-md bg-white border-2 border-green-700 rounded-xl p-8">
+        <div className="w-112 bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
             Add Category
           </h2>
@@ -151,10 +165,13 @@ function Uploads({ activeForm }) {
 
           <input
             type="file"
+            accept="image/*"
             onChange={(e) => {
               if (e.target.files[0]) {
                 setCategoryImage(e.target.files[0]);
-                setCategoryPreview(URL.createObjectURL(e.target.files[0]));
+                setCategoryPreview(
+                  URL.createObjectURL(e.target.files[0])
+                );
               }
             }}
           />
@@ -171,6 +188,11 @@ function Uploads({ activeForm }) {
           </button>
         </div>
       )}
+
+    
+
+
+
       {/* Product Form */}
       {activeForm === "product" && (
         <div className="w-175 bg-white border-2 border-green-700 rounded-xl p-8">
@@ -258,4 +280,4 @@ function Uploads({ activeForm }) {
   );
 }
 
-export default Uploads;
+export default Uploads; 
