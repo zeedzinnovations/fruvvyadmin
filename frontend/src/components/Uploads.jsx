@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function Uploads({ activeForm }) {
+  // ================= CATEGORY STATE =================
   const [categoryName, setCategoryName] = useState("");
   const [categoryImage, setCategoryImage] = useState(null);
   const [categoryPreview, setCategoryPreview] = useState("");
   const [categories, setCategories] = useState([]);
 
+  // ================= PRODUCT STATE =================
   const [productName, setProductName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [price, setPrice] = useState("");
@@ -18,30 +20,38 @@ function Uploads({ activeForm }) {
   const [productPreview, setProductPreview] = useState("");
   const [products, setProducts] = useState([]);
 
-  // Fetch categories
+  // ================= FETCH DATA =================
   useEffect(() => {
-    fetch(`${API_URL}/api/get-categories`)
+    fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
       .then(setCategories)
       .catch(console.error);
   }, []);
 
-  // Fetch products
   useEffect(() => {
-    fetch(`${API_URL}/api/get-products`)
+    fetch(`${API_BASE_URL}/api/get-products`)
       .then((res) => res.json())
       .then(setProducts)
       .catch(console.error);
   }, []);
 
-  // Cloudinary upload
+  // ================= CLOUDINARY UPLOAD =================
   const uploadToCloudinary = async (file, folder) => {
     try {
+      // 1️⃣ Get signature
       const sigRes = await fetch(
-        `${API_URL}/api/cloudinary-signature?folder=${folder}`
+        `${API_BASE_URL}/api/cloudinary-signature?folder=${encodeURIComponent(
+          folder
+        )}`
       );
       const sig = await sigRes.json();
 
+      if (!sig.signature) {
+        console.error("Signature error:", sig);
+        throw new Error("Signature missing");
+      }
+
+      // 2️⃣ Upload to Cloudinary
       const formData = new FormData();
       formData.append("file", file);
       formData.append("api_key", sig.apiKey);
@@ -51,15 +61,16 @@ function Uploads({ activeForm }) {
 
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: formData }
       );
 
-      if (!uploadRes.ok) throw new Error("Upload failed");
-
       const data = await uploadRes.json();
+
+      if (!data.secure_url) {
+        console.error("Cloudinary error:", data);
+        throw new Error("Upload failed");
+      }
+
       return data.secure_url;
     } catch (err) {
       console.error(err);
@@ -68,7 +79,7 @@ function Uploads({ activeForm }) {
     }
   };
 
-  // Submit category
+  // ================= SUBMIT CATEGORY =================
   const submitCategory = async () => {
     if (!categoryName) return alert("Enter category name");
 
@@ -80,25 +91,23 @@ function Uploads({ activeForm }) {
       );
     }
 
-    await fetch(`${API_URL}/api/categories`, {
+    await fetch(`${API_BASE_URL}/api/categories`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: categoryName,
-        image_url: imageUrl,
-      }),
+      body: JSON.stringify({ name: categoryName, image_url: imageUrl }),
     });
 
     alert("Category added");
+
     setCategoryName("");
     setCategoryImage(null);
     setCategoryPreview("");
 
-    const res = await fetch(`${API_URL}/api/get-categories`);
+    const res = await fetch(`${API_BASE_URL}/api/get-categories`);
     setCategories(await res.json());
   };
 
-  // Submit product
+  // ================= SUBMIT PRODUCT =================
   const submitProduct = async () => {
     if (!productName || !categoryId)
       return alert("Fill required fields");
@@ -111,7 +120,7 @@ function Uploads({ activeForm }) {
       );
     }
 
-    await fetch(`${API_URL}/api/products`, {
+    await fetch(`${API_BASE_URL}/api/products`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -126,6 +135,7 @@ function Uploads({ activeForm }) {
     });
 
     alert("Product added");
+
     setProductName("");
     setCategoryId("");
     setPrice("");
@@ -135,18 +145,19 @@ function Uploads({ activeForm }) {
     setProductImage(null);
     setProductPreview("");
 
-    const res = await fetch(`${API_URL}/api/get-products`);
+    const res = await fetch(`${API_BASE_URL}/api/get-products`);
     setProducts(await res.json());
   };
 
+  // ================= UNIQUE CATEGORIES =================
   const uniqueCategories = Object.values(
     categories.reduce((acc, cat) => {
-      const key = cat.name.toLowerCase();
-      if (!acc[key]) acc[key] = cat;
+      acc[cat.id] = cat;
       return acc;
     }, {})
   );
 
+  // ================= UI =================
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
       {activeForm === "category" && (
@@ -167,12 +178,10 @@ function Uploads({ activeForm }) {
             type="file"
             accept="image/*"
             onChange={(e) => {
-              if (e.target.files[0]) {
-                setCategoryImage(e.target.files[0]);
-                setCategoryPreview(
-                  URL.createObjectURL(e.target.files[0])
-                );
-              }
+              setCategoryImage(e.target.files[0]);
+              setCategoryPreview(
+                URL.createObjectURL(e.target.files[0])
+              );
             }}
           />
 
@@ -189,13 +198,8 @@ function Uploads({ activeForm }) {
         </div>
       )}
 
-    
-
-
-
-      {/* Product Form */}
       {activeForm === "product" && (
-        <div className="w-175 bg-white border-2 border-green-700 rounded-xl p-8">
+        <div className="w-150 bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
             Add Product
           </h2>
@@ -228,6 +232,7 @@ function Uploads({ activeForm }) {
             onChange={(e) => setPrice(e.target.value)}
             className="w-full border p-3 rounded-xl mb-4"
           />
+
           <input
             type="text"
             placeholder="Country"
@@ -235,6 +240,7 @@ function Uploads({ activeForm }) {
             onChange={(e) => setCountry(e.target.value)}
             className="w-full border p-3 rounded-xl mb-4"
           />
+
           <input
             type="text"
             placeholder="Unit"
@@ -242,6 +248,7 @@ function Uploads({ activeForm }) {
             onChange={(e) => setUnit(e.target.value)}
             className="w-full border p-3 rounded-xl mb-4"
           />
+
           <textarea
             placeholder="Description"
             value={description}
@@ -253,10 +260,10 @@ function Uploads({ activeForm }) {
             type="file"
             accept="image/*"
             onChange={(e) => {
-              if (e.target.files[0]) {
-                setProductImage(e.target.files[0]);
-                setProductPreview(URL.createObjectURL(e.target.files[0]));
-              }
+              setProductImage(e.target.files[0]);
+              setProductPreview(
+                URL.createObjectURL(e.target.files[0])
+              );
             }}
             className="mb-4"
           />
@@ -280,4 +287,4 @@ function Uploads({ activeForm }) {
   );
 }
 
-export default Uploads; 
+export default Uploads;

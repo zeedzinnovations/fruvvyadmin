@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const API= import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function Catalogs({ activeForm }) {
   const [categories, setCategories] = useState([]);
@@ -10,7 +10,7 @@ function Catalogs({ activeForm }) {
 
 
   useEffect(() => {
-    fetch(`${API}/api/get-categories`)
+    fetch(`${API_BASE_URL }/api/get-categories`)
       .then((res) => res.json())
       .then((data) => setCategories(data))
       .catch((err) => console.error("Category fetch error", err));
@@ -18,7 +18,7 @@ function Catalogs({ activeForm }) {
 
 
   useEffect(() => {
-    fetch(`${API}/api/get-products`)
+    fetch(`${API_BASE_URL }/api/get-products`)
       .then((res) => res.json())
       .then((data) => setProducts(data))
       .catch((err) => console.error("Product fetch error", err));
@@ -27,7 +27,7 @@ function Catalogs({ activeForm }) {
   const handleDeleteCategory = async (id) => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
 
-    await fetch(`${API}/api/categories/${id}`, {
+    await fetch(`${API_BASE_URL }/api/categories/${id}`, {
       method: "DELETE",
     });
 
@@ -38,7 +38,7 @@ function Catalogs({ activeForm }) {
   const handleDeleteProduct = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
-    await fetch(`${API}/api/products/${id}`, {
+    await fetch(`${API_BASE_URL }/api/products/${id}`, {
       method: "DELETE",
     });
 

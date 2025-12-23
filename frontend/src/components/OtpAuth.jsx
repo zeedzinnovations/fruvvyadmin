@@ -5,13 +5,13 @@ function OtpAuth() {
   const [searchTerm, setSearchTerm] = useState("");
 
 
-  const API = import.meta.env.VITE_API_URL;
+  const API_BASE_URL  = import.meta.env.VITE_API_URL;
 
 
   useEffect(() => {
     const fetchOTPs = async () => {
       try {
-        const res = await fetch(`${API}/devapiService/getOtpList`);
+        const res = await fetch(`${API_BASE_URL }/devapiService/getOtpList`);
 
         if (!res.ok) {
           throw new Error("Failed to fetch OTP list");
