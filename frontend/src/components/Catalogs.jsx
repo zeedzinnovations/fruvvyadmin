@@ -8,14 +8,14 @@ function Catalogs({ activeForm }) {
 
   // Fetch categories
   useEffect(() => {
-    fetch("http://localhost:5000/api/get-categories")
+    fetch("https://fruvvyadmin.onrender.com/api/get-categories")
       .then((res) => res.json())
       .then((data) => setCategories(data));
   }, []);
 
   // Fetch products
   useEffect(() => {
-    fetch("http://localhost:5000/api/get-products")
+    fetch("https://fruvvyadmin.onrender.com/api/get-products")
       .then((res) => res.json())
       .then((data) => setProducts(data));
   }, []);
@@ -24,14 +24,14 @@ function Catalogs({ activeForm }) {
   const handleDeleteCategory = async (id) => {
     if (!window.confirm("Are you sure you want to delete this category?"))
       return;
-    await fetch(`http://localhost:5000/api/categories/${id}`, { method: "DELETE" });
+    await fetch(`https://fruvvyadmin.onrender.com/api/categories/${id}`, { method: "DELETE" });
     setCategories(categories.filter((cat) => cat.id !== id));
   };
 
   const handleDeleteProduct = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?"))
       return;
-    await fetch(`http://localhost:5000/api/products/${id}`, { method: "DELETE" });
+    await fetch(`https://fruvvyadmin.onrender.com/api/products/${id}`, { method: "DELETE" });
     setProducts(products.filter((prod) => prod.id !== id));
   };
 
