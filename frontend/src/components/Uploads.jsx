@@ -28,7 +28,7 @@ function Uploads({ activeForm }) {
       .then((data) => setProducts(data));
   }, []);
 
-  // 🔥 Cloudinary Upload (with folder support)
+ 
   const uploadToCloudinary = async (file, folder) => {
     try {
       const sigRes = await fetch(
@@ -58,7 +58,7 @@ function Uploads({ activeForm }) {
     }
   };
 
-  // ✅ Submit Category
+ 
   const submitCategory = async () => {
     if (!categoryName) return alert("Enter category name");
 
@@ -85,7 +85,7 @@ function Uploads({ activeForm }) {
     setCategories(await res.json());
   };
 
-  // ✅ Submit Product
+
   const submitProduct = async () => {
     if (!productName || !categoryId) return alert("Fill required fields");
 
