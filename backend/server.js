@@ -2,32 +2,53 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
 import authRoutes from "./routes/auth.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import productRoutes from "./routes/product.route.js";
 import uploadRoutes from "./routes/upload.route.js";
+import { initTables } from "./db/initTables.js";
 
 dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-  res.send("Welcome to Fruvvy");
+  res.send("Welcome to Fruvvy Backend");
 });
+
 app.get("/devapiService", (req, res) => {
-  res.send("Welcome to Fruvvy backend");
+  res.send(" Fruvvy Auth Service Running");
 });
+
 app.use("/devapiService", authRoutes);
+
 app.use("/api", uploadRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+const startServer = async () => {
+  try {
+    await initTables();
+
+    app.listen(PORT, () => {
+      console.log(` Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error(" Server failed to start:", err);
+    process.exit(1);
+  }
+};
+
+startServer();

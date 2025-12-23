@@ -1,4 +1,4 @@
-import pool from "../db.js";
+import pool from "../db/db.js";
 
 export const addCategory = async (req, res) => {
   const { name, image_url } = req.body;

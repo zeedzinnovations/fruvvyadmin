@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import pool from "../db.js";
+import pool from "../db/db.js";
 
 const ACCESS_TOKEN_EXPIRY = "1d"; 
 const REFRESH_TOKEN_EXPIRY_DAYS = 90; 

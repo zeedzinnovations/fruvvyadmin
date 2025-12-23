@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 
 function Uploads({ activeForm }) {
-
   const [categoryName, setCategoryName] = useState("");
   const [categoryImage, setCategoryImage] = useState(null);
   const [categoryPreview, setCategoryPreview] = useState("");
   const [categories, setCategories] = useState([]);
 
- 
   const [productName, setProductName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [price, setPrice] = useState("");
@@ -18,25 +16,23 @@ function Uploads({ activeForm }) {
   const [productPreview, setProductPreview] = useState("");
   const [products, setProducts] = useState([]);
 
-  // Fetch categories
   useEffect(() => {
     fetch("http://localhost:5000/api/get-categories")
       .then((res) => res.json())
       .then((data) => setCategories(data));
   }, []);
 
-  // Fetch products
   useEffect(() => {
     fetch("http://localhost:5000/api/get-products")
       .then((res) => res.json())
       .then((data) => setProducts(data));
   }, []);
 
-  // Cloudinary upload
-  const uploadToCloudinary = async (file) => {
+  // 🔥 Cloudinary Upload (with folder support)
+  const uploadToCloudinary = async (file, folder) => {
     try {
       const sigRes = await fetch(
-        "http://localhost:5000/api/cloudinary-signature"
+        `http://localhost:5000/api/cloudinary-signature?folder=${folder}`
       );
       const sig = await sigRes.json();
 
@@ -45,6 +41,7 @@ function Uploads({ activeForm }) {
       formData.append("api_key", sig.apiKey);
       formData.append("timestamp", sig.timestamp);
       formData.append("signature", sig.signature);
+      formData.append("folder", sig.folder);
 
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
@@ -61,13 +58,17 @@ function Uploads({ activeForm }) {
     }
   };
 
-  // Submit Category
+  // ✅ Submit Category
   const submitCategory = async () => {
     if (!categoryName) return alert("Enter category name");
 
-
     let imageUrl = "";
-    if (categoryImage) imageUrl = await uploadToCloudinary(categoryImage);
+    if (categoryImage) {
+      imageUrl = await uploadToCloudinary(
+        categoryImage,
+        "fruvvy_images/categories"
+      );
+    }
 
     await fetch("http://localhost:5000/api/categories", {
       method: "POST",
@@ -84,12 +85,17 @@ function Uploads({ activeForm }) {
     setCategories(await res.json());
   };
 
-  // Submit Product
+  // ✅ Submit Product
   const submitProduct = async () => {
     if (!productName || !categoryId) return alert("Fill required fields");
 
     let imageUrl = "";
-    if (productImage) imageUrl = await uploadToCloudinary(productImage);
+    if (productImage) {
+      imageUrl = await uploadToCloudinary(
+        productImage,
+        "fruvvy_images/products"
+      );
+    }
 
     await fetch("http://localhost:5000/api/products", {
       method: "POST",
@@ -119,20 +125,18 @@ function Uploads({ activeForm }) {
     setProducts(await res.json());
   };
 
-  // Create unique categories 
   const uniqueCategories = Object.values(
     categories.reduce((acc, cat) => {
       const key = cat.name.toLowerCase();
-      if (!acc[key]) acc[key] = cat; 
+      if (!acc[key]) acc[key] = cat;
       return acc;
     }, {})
   );
 
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
-      {/* Category Form */}
       {activeForm === "category" && (
-        <div className="w-112.5 bg-white border-2 border-green-700 rounded-xl p-8">
+        <div className="w-112 bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
             Add Category
           </h2>
@@ -156,10 +160,7 @@ function Uploads({ activeForm }) {
           />
 
           {categoryPreview && (
-            <img
-              src={categoryPreview}
-              className="mt-4 h-32 object-cover rounded"
-            />
+            <img src={categoryPreview} className="mt-4 h-32 rounded" />
           )}
 
           <button
@@ -170,7 +171,6 @@ function Uploads({ activeForm }) {
           </button>
         </div>
       )}
-
       {/* Product Form */}
       {activeForm === "product" && (
         <div className="w-175 bg-white border-2 border-green-700 rounded-xl p-8">
