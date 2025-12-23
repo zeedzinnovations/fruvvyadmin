@@ -18,7 +18,7 @@ import OtpAuth from "../components/OtpAuth";
 import Upload from "../components/Uploads";
 import Catalog from "../components/Catalogs";
 
-/* ================= DASHBOARD FEATURES (INLINE) ================= */
+
 
 function DashboardStats() {
   const stats = [
@@ -93,7 +93,7 @@ function RecentActivity() {
   );
 }
 
-/* ================= SIDEBAR ITEM ================= */
+
 
 function SidebarItem({ icon: Icon, label, active, onClick }) {
   const base = active
@@ -108,7 +108,7 @@ function SidebarItem({ icon: Icon, label, active, onClick }) {
   );
 }
 
-/* ================= MAIN ADMIN ================= */
+
 
 export default function Admin() {
   const user =
