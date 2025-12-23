@@ -3,13 +3,13 @@ import React, { useEffect, useState } from "react";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function Uploads({ activeForm }) {
-  // ================= CATEGORY STATE =================
+
   const [categoryName, setCategoryName] = useState("");
   const [categoryImage, setCategoryImage] = useState(null);
   const [categoryPreview, setCategoryPreview] = useState("");
   const [categories, setCategories] = useState([]);
 
-  // ================= PRODUCT STATE =================
+
   const [productName, setProductName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [price, setPrice] = useState("");
@@ -20,7 +20,7 @@ function Uploads({ activeForm }) {
   const [productPreview, setProductPreview] = useState("");
   const [products, setProducts] = useState([]);
 
-  // ================= FETCH DATA =================
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
@@ -35,10 +35,10 @@ function Uploads({ activeForm }) {
       .catch(console.error);
   }, []);
 
-  // ================= CLOUDINARY UPLOAD =================
+
   const uploadToCloudinary = async (file, folder) => {
     try {
-      // 1️⃣ Get signature
+     
       const sigRes = await fetch(
         `${API_BASE_URL}/api/cloudinary-signature?folder=${encodeURIComponent(
           folder
@@ -51,7 +51,7 @@ function Uploads({ activeForm }) {
         throw new Error("Signature missing");
       }
 
-      // 2️⃣ Upload to Cloudinary
+  
       const formData = new FormData();
       formData.append("file", file);
       formData.append("api_key", sig.apiKey);
@@ -79,7 +79,7 @@ function Uploads({ activeForm }) {
     }
   };
 
-  // ================= SUBMIT CATEGORY =================
+
   const submitCategory = async () => {
     if (!categoryName) return alert("Enter category name");
 
@@ -107,7 +107,7 @@ function Uploads({ activeForm }) {
     setCategories(await res.json());
   };
 
-  // ================= SUBMIT PRODUCT =================
+
   const submitProduct = async () => {
     if (!productName || !categoryId)
       return alert("Fill required fields");
@@ -149,7 +149,7 @@ function Uploads({ activeForm }) {
     setProducts(await res.json());
   };
 
-  // ================= UNIQUE CATEGORIES =================
+
   const uniqueCategories = Object.values(
     categories.reduce((acc, cat) => {
       acc[cat.id] = cat;
@@ -157,7 +157,6 @@ function Uploads({ activeForm }) {
     }, {})
   );
 
-  // ================= UI =================
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
       {activeForm === "category" && (
