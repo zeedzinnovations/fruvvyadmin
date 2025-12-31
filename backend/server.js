@@ -16,9 +16,12 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5174",
-    "https://fruvvyadmin-1.onrender.com/"
-  ]
+    "https://fruvvyadmin-1.onrender.com",
+    "https://fruvvyadmin.onrender.com"
+  ],
+  credentials: true
 }));
+
 
 
 app.use(express.json());
