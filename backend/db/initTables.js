@@ -46,23 +46,34 @@ export const initTables = async () => {
     `);
 
   //product table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS products (
+    await pool.query(`CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+  price NUMERIC(10,2),
+  country VARCHAR(100),
+  unit VARCHAR(50),
+  description TEXT,
+  image_url TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+    `);
+
+    
+    //users
+     await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(150) NOT NULL,
-        category_id INT NOT NULL,
-        price NUMERIC(10,2) NOT NULL,
-        country VARCHAR(100),
-        unit VARCHAR(50),
-        description TEXT,
-        image_url TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT fk_category
-          FOREIGN KEY (category_id)
-          REFERENCES categories(id)
-          ON DELETE CASCADE
+        name VARCHAR(100) NOT NULL,
+         email VARCHAR(100) NOT NULL,
+         password VARCHAR(100) NOT NULL,
+
+          role VARCHAR(50) NOT NULL DEFAULT 'user',
+        
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
 
     console.log(" All tables created ");
   } catch (error) {

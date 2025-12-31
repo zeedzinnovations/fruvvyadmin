@@ -8,10 +8,11 @@ cloudinary.v2.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
 export const getCloudinarySignature = (req, res) => {
   try {
     const timestamp = Math.floor(Date.now() / 1000);
+
+  
     const folder = req.query.folder;
 
     if (!folder) {
@@ -21,7 +22,7 @@ export const getCloudinarySignature = (req, res) => {
     const signature = cloudinary.v2.utils.api_sign_request(
       {
         timestamp,
-        folder,
+        folder, 
       },
       process.env.CLOUDINARY_API_SECRET
     );
@@ -31,10 +32,10 @@ export const getCloudinarySignature = (req, res) => {
       apiKey: process.env.CLOUDINARY_API_KEY,
       timestamp,
       signature,
-      folder,
+      folder, 
     });
   } catch (error) {
-    console.error("Cloudinary signature error:", error);
-    res.status(500).json({ message: "Failed to generate signature" });
+    console.error(error);
+    res.status(500).json({ message: "Signature error" });
   }
 };

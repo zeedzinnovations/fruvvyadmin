@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
+import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-function Uploads({ activeForm }) {
+function Update({ activeForm }) {
 
   const [categoryName, setCategoryName] = useState("");
   const [categoryImage, setCategoryImage] = useState(null);
   const [categoryPreview, setCategoryPreview] = useState("");
   const [categories, setCategories] = useState([]);
-
 
   const [productName, setProductName] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -24,77 +24,33 @@ function Uploads({ activeForm }) {
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
-      .then(setCategories)
-      .catch(console.error);
+      .then(setCategories);
   }, []);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-products`)
       .then((res) => res.json())
-      .then(setProducts)
-      .catch(console.error);
+      .then(setProducts);
   }, []);
-
-
-  const uploadToCloudinary = async (file, folder) => {
-    try {
-     
-      const sigRes = await fetch(
-        `${API_BASE_URL}/api/cloudinary-signature?folder=${encodeURIComponent(
-          folder
-        )}`
-      );
-      const sig = await sigRes.json();
-
-      if (!sig.signature) {
-        console.error("Signature error:", sig);
-        throw new Error("Signature missing");
-      }
-
-  
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("api_key", sig.apiKey);
-      formData.append("timestamp", sig.timestamp);
-      formData.append("signature", sig.signature);
-      formData.append("folder", sig.folder);
-
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
-        { method: "POST", body: formData }
-      );
-
-      const data = await uploadRes.json();
-
-      if (!data.secure_url) {
-        console.error("Cloudinary error:", data);
-        throw new Error("Upload failed");
-      }
-
-      return data.secure_url;
-    } catch (err) {
-      console.error(err);
-      alert("Cloudinary upload failed");
-      return "";
-    }
-  };
 
 
   const submitCategory = async () => {
     if (!categoryName) return alert("Enter category name");
 
     let imageUrl = "";
+
     if (categoryImage) {
-      imageUrl = await uploadToCloudinary(
-        categoryImage,
-        "fruvvy_images/categories"
-      );
+      imageUrl = await uploadToCloudinary(categoryImage, "categories");
+      if (!imageUrl) return alert("Image upload failed");
     }
 
     await fetch(`${API_BASE_URL}/api/categories`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: categoryName, image_url: imageUrl }),
+      body: JSON.stringify({
+        name: categoryName,
+        image_url: imageUrl,
+      }),
     });
 
     alert("Category added");
@@ -113,11 +69,10 @@ function Uploads({ activeForm }) {
       return alert("Fill required fields");
 
     let imageUrl = "";
+
     if (productImage) {
-      imageUrl = await uploadToCloudinary(
-        productImage,
-        "fruvvy_images/products"
-      );
+      imageUrl = await uploadToCloudinary(productImage, "products");
+      if (!imageUrl) return alert("Image upload failed");
     }
 
     await fetch(`${API_BASE_URL}/api/products`, {
@@ -149,7 +104,6 @@ function Uploads({ activeForm }) {
     setProducts(await res.json());
   };
 
-
   const uniqueCategories = Object.values(
     categories.reduce((acc, cat) => {
       acc[cat.id] = cat;
@@ -160,7 +114,7 @@ function Uploads({ activeForm }) {
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
       {activeForm === "category" && (
-        <div className="w-112 bg-white border-2 border-green-700 rounded-xl p-8">
+        <div className="w-md bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
             Add Category
           </h2>
@@ -178,9 +132,7 @@ function Uploads({ activeForm }) {
             accept="image/*"
             onChange={(e) => {
               setCategoryImage(e.target.files[0]);
-              setCategoryPreview(
-                URL.createObjectURL(e.target.files[0])
-              );
+              setCategoryPreview(URL.createObjectURL(e.target.files[0]));
             }}
           />
 
@@ -260,9 +212,7 @@ function Uploads({ activeForm }) {
             accept="image/*"
             onChange={(e) => {
               setProductImage(e.target.files[0]);
-              setProductPreview(
-                URL.createObjectURL(e.target.files[0])
-              );
+              setProductPreview(URL.createObjectURL(e.target.files[0]));
             }}
             className="mb-4"
           />
@@ -286,4 +236,4 @@ function Uploads({ activeForm }) {
   );
 }
 
-export default Uploads;
+export default Update;
