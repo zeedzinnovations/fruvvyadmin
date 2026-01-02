@@ -14,11 +14,13 @@ import {
 import { GrCatalog } from "react-icons/gr";
 import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
 import { FiUsers } from "react-icons/fi";
+import { CgUserList } from "react-icons/cg";
 
 import OtpAuth from "../components/OtpAuth";
 import Upload from "../components/Uploads";
 import Catalog from "../components/Catalogs";
 import Signup from "./Signup";
+import UserList from '../components/UserList'
 
 function DashboardStats() {
   const stats = [
@@ -142,13 +144,12 @@ export default function Admin() {
               active={activeView === "signup"}
               onClick={() => setActiveView("signup")}
             />
-
-            <SidebarItem
-              icon={FaBoxOpen}
-              label="Products"
-              active={activeView === "products"}
-              onClick={() => setActiveView("products")}
-            />
+<SidebarItem
+  icon={CgUserList}
+  label="List of Users"
+  active={activeView === "users"}
+  onClick={() => setActiveView("users")}
+/>
 
             <SidebarItem
               icon={FaShoppingCart}
@@ -163,6 +164,7 @@ export default function Admin() {
               active={activeView === "customers"}
               onClick={() => setActiveView("customers")}
             />
+             
 
             <SidebarItem
               icon={FaChartBar}
@@ -171,13 +173,13 @@ export default function Admin() {
               onClick={() => setActiveView("otp")}
             />
 
-            {/* Catalog */}
+            {/* Products List*/}
             <li>
               <div
                 onClick={() => setCatalogOpen(!catalogOpen)}
                 className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white hover:text-green-700"
               >
-                <GrCatalog /> Catalog
+                <FaBoxOpen/> Products
                 <span className="ml-auto">
                   {catalogOpen ? <RiArrowDropUpLine /> : <RiArrowDropDownLine />}
                 </span>
@@ -295,16 +297,14 @@ export default function Admin() {
         {activeView === "upload" && <Upload activeForm={activeForm} />}
         {activeView === "catalog" && <Catalog activeForm={activeForm} />}
         {activeView === "signup" && <Signup />}
+        {activeView === "users" && <UserList />}
+
 
         {activeView !== "dashboard" &&
           activeView !== "otp" &&
           activeView !== "upload" &&
-          activeView !== "catalog" &&
-          activeView !== "signup" && (
-            <h1 className="text-3xl font-bold text-green-700">
-              {activeView} view
-            </h1>
-          )}
+          activeView !== "catalog"
+        }
       </main>
     </div>
   );

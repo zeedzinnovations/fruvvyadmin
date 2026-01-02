@@ -4,12 +4,12 @@ import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function Catalogs({ activeForm }) {
-
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
 
   const [categorySearch, setCategorySearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [editingProductId, setEditingProductId] = useState(null);
@@ -28,7 +28,6 @@ function Catalogs({ activeForm }) {
   const [categoryImageFile, setCategoryImageFile] = useState(null);
   const [productImageFile, setProductImageFile] = useState(null);
 
-
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
@@ -41,7 +40,7 @@ function Catalogs({ activeForm }) {
       .then(setProducts);
   }, []);
 
-//delete
+  // DELETE
   const handleDeleteCategory = async (id) => {
     if (!window.confirm("Delete this category?")) return;
     await fetch(`${API_BASE_URL}/api/categories/${id}`, { method: "DELETE" });
@@ -54,7 +53,7 @@ function Catalogs({ activeForm }) {
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
-  //update
+  // EDIT
   const startEditCategory = (cat) => {
     setEditingCategoryId(cat.id);
     setCategoryForm({ name: cat.name, image_url: cat.image_url });
@@ -75,6 +74,7 @@ function Catalogs({ activeForm }) {
     setProductImageFile(null);
   };
 
+  // UPDATE
   const handleUpdateCategory = async (id) => {
     let imageUrl = categoryForm.image_url;
 
@@ -122,7 +122,6 @@ function Catalogs({ activeForm }) {
     setEditingProductId(null);
     setProductImageFile(null);
   };
-
 
   return (
     <div>
@@ -248,231 +247,219 @@ function Catalogs({ activeForm }) {
             </table>
           </div>
         </section>
+      )} 
+      {/* Product table */}
+       {activeForm === "product_list" && (
+        <section>
+          <h2 className="text-2xl font-bold mb-4 text-green-700">
+            Product List
+          </h2>
+
+          <div className="flex justify-between items-center mb-4">
+            <input
+              type="text"
+              placeholder="Search..."
+              className="mb-4 px-4 py-2 border rounded-lg"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+            />
+
+            <select
+              className="px-4 py-2 border rounded-lg"
+              value={selectedCategory}
+              onChange={(e) =>
+                setSelectedCategory(
+                  e.target.value === "all"
+                    ? "all"
+                    : Number(e.target.value)
+                )
+              }
+            >
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-3 py-2">ID</th>
+                  <th className="border px-3 py-2">Name</th>
+                  <th className="border px-3 py-2">Category</th>
+                  <th className="border px-3 py-2">Price</th>
+                  <th className="border px-3 py-2">Unit</th>
+                  <th className="border px-3 py-2">Country</th>
+                  <th className="border px-3 py-2">Description</th>
+                  <th className="border px-3 py-2">Image</th>
+                  <th className="border px-3 py-2">Actions</th>
+                </tr>
+              </thead>
+<tbody>
+  {products
+    .filter((p) => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        p.category_name.toLowerCase().includes(productSearch.toLowerCase());
+
+      const matchesCategory =
+        selectedCategory === "all" ||
+        p.category_id === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    })
+    .map((prod, index) => (
+      <tr key={prod.id}>
+        <td className="border px-3 py-2">{index + 1}</td>
+
+       
+        <td className="border px-3 py-2">
+          {editingProductId === prod.id ? (
+            <input
+              className="border px-2 py-1 rounded w-full"
+              value={productForm.name}
+              onChange={(e) =>
+                setProductForm({ ...productForm, name: e.target.value })
+              }
+            />
+          ) : (
+            prod.name
+          )}
+        </td>
+
+      
+        <td className="border px-3 py-2">{prod.category_name}</td>
+
+       
+        <td className="border px-3 py-2">
+          {editingProductId === prod.id ? (
+            <input
+              className="border px-2 py-1 rounded w-full"
+              value={productForm.price}
+              onChange={(e) =>
+                setProductForm({ ...productForm, price: e.target.value })
+              }
+            />
+          ) : (
+            prod.price
+          )}
+        </td>
+
+       
+        <td className="border px-3 py-2">
+          {editingProductId === prod.id ? (
+            <input
+              className="border px-2 py-1 rounded w-full"
+              value={productForm.unit}
+              onChange={(e) =>
+                setProductForm({ ...productForm, unit: e.target.value })
+              }
+            />
+          ) : (
+            prod.unit
+          )}
+        </td>
+
+        <td className="border px-3 py-2">
+          {editingProductId === prod.id ? (
+            <input
+              className="border px-2 py-1 rounded w-full"
+              value={productForm.country}
+              onChange={(e) =>
+                setProductForm({ ...productForm, country: e.target.value })
+              }
+            />
+          ) : (
+            prod.country
+          )}
+        </td>
+
+        <td className="border px-3 py-2">
+          {editingProductId === prod.id ? (
+            <textarea
+              className="border px-2 py-1 rounded w-full"
+              value={productForm.description}
+              onChange={(e) =>
+                setProductForm({
+                  ...productForm,
+                  description: e.target.value,
+                })
+              }
+            />
+          ) : (
+            prod.description
+          )}
+        </td>
+
+        
+        <td className="border px-3 py-2 text-center">
+          {editingProductId === prod.id ? (
+            <>
+              <input
+                type="file"
+                onChange={(e) => setProductImageFile(e.target.files[0])}
+              />
+              {(productImageFile || productForm.image_url) && (
+                <img
+                  src={
+                    productImageFile
+                      ? URL.createObjectURL(productImageFile)
+                      : productForm.image_url
+                  }
+                  className="w-12 h-12 mx-auto mt-2 rounded"
+                />
+              )}
+            </>
+          ) : (
+            prod.image_url && (
+              <img
+                src={prod.image_url}
+                className="w-12 h-12 mx-auto rounded"
+              />
+            )
+          )}
+        </td>
+
+       
+        <td className="border px-3 py-2 text-center">
+          <div className="flex justify-center gap-2">
+            {editingProductId === prod.id ? (
+              <button
+                onClick={() => handleUpdateProduct(prod.id)}
+                className="bg-green-600 text-white px-3 py-1 rounded"
+              >
+                Save
+              </button>
+            ) : (
+              <button
+                onClick={() => startEditProduct(prod)}
+                className="bg-blue-600 text-white px-3 py-1 rounded"
+              >
+                Edit
+              </button>
+            )}
+
+            <button
+              onClick={() => handleDeleteProduct(prod.id)}
+              className="bg-red-600 text-white px-3 py-1 rounded"
+            >
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))}
+</tbody>
+
+            </table>
+          </div>
+        </section>
       )}
 
-    {/* Product table */}
-      {activeForm === "product_list" && (
-       <section>
-    <h2 className="text-2xl font-bold mb-4 text-green-700">
-      Product List
-    </h2>
-
-    <input
-      type="text"
-      placeholder="Search..."
-      className="mb-4 px-4 py-2 border rounded-lg"
-      value={productSearch}
-      onChange={(e) => setProductSearch(e.target.value)}
-    />
-
-    <div className="overflow-x-auto">
-      <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="px-4 py-3 border text-left">ID</th>
-            <th className="px-4 py-3 border text-left">Product Name</th>
-            <th className="px-4 py-3 border text-left">Category</th>
-            <th className="px-4 py-3 border">Price</th>
-            <th className="px-4 py-3 border">Unit</th>
-            <th className="px-4 py-3 border">Country</th>
-            <th className="px-4 py-3 border text-left">Description</th>
-            <th className="px-4 py-3 border text-center">Image</th>
-            <th className="px-4 py-3 border text-center">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {products
-            .filter(
-              (p) =>
-                p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-                p.category_name
-                  .toLowerCase()
-                  .includes(productSearch.toLowerCase())
-            )
-            .map((prod, index) => (
-              <tr key={prod.id} className="hover:bg-gray-50 transition">
-               
-                <td className="px-4 py-3 border">{index + 1}</td>
-
-                <td className="px-4 py-3 border">
-                  {editingProductId === prod.id ? (
-                    <input
-                      className="border px-2 py-1 rounded w-full"
-                      value={productForm.name}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          name: e.target.value,
-                        })
-                      }
-                    />
-                  ) : (
-                    prod.name
-                  )}
-                </td>
-
-            
-                <td className="px-4 py-3 border">
-                  {editingProductId === prod.id ? (
-                    <select
-                      className="border px-2 py-1 rounded w-full"
-                      value={productForm.category_id}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          category_id: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">Select</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    prod.category_name
-                  )}
-                </td>
-
-              
-                <td className="px-4 py-3 border">
-                  {editingProductId === prod.id ? (
-                    <input
-                      type="number"
-                      className="border px-2 py-1 rounded w-full"
-                      value={productForm.price}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          price: e.target.value,
-                        })
-                      }
-                    />
-                  ) : (
-                    prod.price
-                  )}
-                </td>
-
-                   <td className="px-4 py-3 border">
-                  {editingProductId === prod.id ? (
-                    <input
-                      className="border px-2 py-1 rounded w-full"
-                      value={productForm.unit}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          unit: e.target.value,
-                        })
-                      }
-                    />
-                  ) : (
-                    prod.unit || "-"
-                  )}
-                </td>
-
-              
-                <td className="px-4 py-3 border">
-                  {editingProductId === prod.id ? (
-                    <input
-                      className="border px-2 py-1 rounded w-full"
-                      value={productForm.country}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          country: e.target.value,
-                        })
-                      }
-                    />
-                  ) : (
-                    prod.country || "-"
-                  )}
-                </td>
-
-               
-                <td className="px-4 py-3 border">
-                  {editingProductId === prod.id ? (
-                    <textarea
-                      className="border px-2 py-1 rounded w-full"
-                      value={productForm.description || ""}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          description: e.target.value,
-                        })
-                      }
-                    />
-                  ) : (
-                    prod.description || "-"
-                  )}
-                </td>
-
-             
-                <td className="px-4 py-3 border text-center">
-                  {editingProductId === prod.id ? (
-                    <>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setProductImageFile(e.target.files[0])
-                        }
-                      />
-                      {(productImageFile || productForm.image_url) && (
-                        <img
-                          src={
-                            productImageFile
-                              ? URL.createObjectURL(productImageFile)
-                              : productForm.image_url
-                          }
-                          className="w-12 h-12 mx-auto mt-2 rounded object-cover"
-                        />
-                      )}
-                    </>
-                  ) : (
-                    prod.image_url && (
-                      <img
-                        src={prod.image_url}
-                        className="w-12 h-12 mx-auto rounded object-cover"
-                      />
-                    )
-                  )}
-                </td>
-
-                <td className="px-4 py-3 border text-center">
-                  <div className="flex justify-center gap-2">
-                    {editingProductId === prod.id ? (
-                      <button
-                        onClick={() => handleUpdateProduct(prod.id)}
-                        className="bg-green-600 text-white px-3 py-1 rounded"
-                      >
-                        Save
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => startEditProduct(prod)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        Edit
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => handleDeleteProduct(prod.id)}
-                      className="bg-red-600 text-white px-3 py-1 rounded"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  </section>     )}
     </div>
   );
 }

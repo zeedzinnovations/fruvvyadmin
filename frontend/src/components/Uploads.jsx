@@ -4,7 +4,6 @@ import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function Update({ activeForm }) {
-
   const [categoryName, setCategoryName] = useState("");
   const [categoryImage, setCategoryImage] = useState(null);
   const [categoryPreview, setCategoryPreview] = useState("");
@@ -20,7 +19,6 @@ function Update({ activeForm }) {
   const [productPreview, setProductPreview] = useState("");
   const [products, setProducts] = useState([]);
 
-
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
@@ -33,9 +31,22 @@ function Update({ activeForm }) {
       .then(setProducts);
   }, []);
 
-
+  // ================= ADD CATEGORY =================
   const submitCategory = async () => {
-    if (!categoryName) return alert("Enter category name");
+    if (!categoryName.trim()) {
+      return alert("Enter category name");
+    }
+
+    // ✅ Case-insensitive duplicate check
+    const categoryExists = categories.some(
+      (cat) =>
+        cat.name.trim().toLowerCase() ===
+        categoryName.trim().toLowerCase()
+    );
+
+    if (categoryExists) {
+      return alert("Category already exists");
+    }
 
     let imageUrl = "";
 
@@ -48,12 +59,12 @@ function Update({ activeForm }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: categoryName,
+        name: categoryName.trim(),
         image_url: imageUrl,
       }),
     });
 
-    alert("Category added");
+    alert("Category added successfully");
 
     setCategoryName("");
     setCategoryImage(null);
@@ -63,10 +74,11 @@ function Update({ activeForm }) {
     setCategories(await res.json());
   };
 
-
+  // ================= ADD PRODUCT =================
   const submitProduct = async () => {
-    if (!productName || !categoryId)
+    if (!productName || !categoryId) {
       return alert("Fill required fields");
+    }
 
     let imageUrl = "";
 
@@ -79,7 +91,7 @@ function Update({ activeForm }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: productName,
+        name: productName.trim(),
         category_id: categoryId,
         price,
         country,
@@ -89,7 +101,7 @@ function Update({ activeForm }) {
       }),
     });
 
-    alert("Product added");
+    alert("Product added successfully");
 
     setProductName("");
     setCategoryId("");
@@ -104,6 +116,7 @@ function Update({ activeForm }) {
     setProducts(await res.json());
   };
 
+  // Remove duplicate categories if API returns duplicates
   const uniqueCategories = Object.values(
     categories.reduce((acc, cat) => {
       acc[cat.id] = cat;
@@ -113,6 +126,7 @@ function Update({ activeForm }) {
 
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
+      {/* ================= CATEGORY FORM ================= */}
       {activeForm === "category" && (
         <div className="w-md bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
@@ -132,7 +146,11 @@ function Update({ activeForm }) {
             accept="image/*"
             onChange={(e) => {
               setCategoryImage(e.target.files[0]);
-              setCategoryPreview(URL.createObjectURL(e.target.files[0]));
+              setCategoryPreview(
+                e.target.files[0]
+                  ? URL.createObjectURL(e.target.files[0])
+                  : ""
+              );
             }}
           />
 
@@ -149,6 +167,7 @@ function Update({ activeForm }) {
         </div>
       )}
 
+      {/* ================= PRODUCT FORM ================= */}
       {activeForm === "product" && (
         <div className="w-150 bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
@@ -212,7 +231,11 @@ function Update({ activeForm }) {
             accept="image/*"
             onChange={(e) => {
               setProductImage(e.target.files[0]);
-              setProductPreview(URL.createObjectURL(e.target.files[0]));
+              setProductPreview(
+                e.target.files[0]
+                  ? URL.createObjectURL(e.target.files[0])
+                  : ""
+              );
             }}
             className="mb-4"
           />
@@ -237,3 +260,7 @@ function Update({ activeForm }) {
 }
 
 export default Update;
+
+
+
+  
