@@ -15,9 +15,15 @@ dotenv.config();
 const app = express();
 app.use(cors({
   origin: [
+<<<<<<< HEAD
     "http://localhost:5173"
   //   "https://fruvvyadmin-1.onrender.com",
   // "https://fruvvyadmin.onrender.com"
+=======
+    // "http://localhost:5173",
+    "https://fruvvyadmin-1.onrender.com/",
+    "https://fruvvyadmin.onrender.com"
+>>>>>>> 7bb30b9da36f229431f2b04fd386d7754514b025
    ],
   credentials: true
 }));
