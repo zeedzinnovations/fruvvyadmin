@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function UserList() {
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
+  const loggedRole = currentUser?.role?.toLowerCase();
+  const isSuperAdmin = loggedRole === "superadmin";
+  const isAdmin = loggedRole === "admin";
+
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [editingUserId, setEditingUserId] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
-    email: "",
     role: "",
     password: "",
   });
@@ -18,14 +24,14 @@ export default function UserList() {
   useEffect(() => {
     fetch(`${API_BASE_URL}/signup/getUsersList`)
       .then((res) => res.json())
-      .then(setUsers);
+      .then(setUsers)
+      .catch(console.error);
   }, []);
 
   const startEdit = (user) => {
     setEditingUserId(user.id);
     setForm({
       name: user.name,
-      email: user.email,
       role: user.role,
       password: "",
     });
@@ -39,39 +45,34 @@ export default function UserList() {
     });
 
     const data = await res.json();
-
     setUsers((prev) => prev.map((u) => (u.id === id ? data.user : u)));
-
     setEditingUserId(null);
+    setShowPassword(false);
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this user?")) return;
 
-    await fetch(`${API_BASE_URL}/signup/${id}`, {
-      method: "DELETE",
-    });
-
+    await fetch(`${API_BASE_URL}/signup/${id}`, { method: "DELETE" });
     setUsers((prev) => prev.filter((u) => u.id !== id));
   };
-
-  const canEdit = currentUser?.role === "SUPERADMIN";
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-green-700 mb-4">Users List</h2>
 
+     
       <input
         type="text"
-        placeholder="Search..."
+        placeholder="Search by Name or Email..."
         className="mb-4 px-4 py-2 border rounded-lg"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
 
-   <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
-              <thead className="bg-gray-100">
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-300 rounded-lg">
+          <thead className="bg-gray-100">
             <tr>
               <th className="border px-3 py-2">ID</th>
               <th className="border px-3 py-2">Name</th>
@@ -83,11 +84,25 @@ export default function UserList() {
 
           <tbody>
             {users
-              .filter(
-                (u) =>
-                  u.name.toLowerCase().includes(search.toLowerCase()) ||
-                  u.email.toLowerCase().includes(search.toLowerCase())
-              )
+           
+              .filter((user) => {
+                const userRole = user.role?.toLowerCase();
+
+                if (isSuperAdmin) return true;
+                if (isAdmin) return userRole === "admin";
+
+                return false;
+              })
+             
+              .filter((user) => {
+                const searchText = search.toLowerCase();
+
+                return (
+                
+                  user.name.toLowerCase().includes(searchText) ||
+                  user.email.toLowerCase().includes(searchText)
+                );
+              })
               .map((user, index) => (
                 <tr key={user.id}>
                   <td className="border px-3 py-2">{index + 1}</td>
@@ -109,7 +124,7 @@ export default function UserList() {
                   <td className="border px-3 py-2">{user.email}</td>
 
                   <td className="border px-3 py-2">
-                    {editingUserId === user.id ? (
+                    {editingUserId === user.id && isSuperAdmin ? (
                       <select
                         className="border px-2 py-1 rounded w-full"
                         value={form.role}
@@ -117,8 +132,8 @@ export default function UserList() {
                           setForm({ ...form, role: e.target.value })
                         }
                       >
-                        <option value="ADMIN">ADMIN</option>
-                        <option value="SUPERADMIN">SUPERADMIN</option>
+                        <option value="admin">Admin</option>
+                        <option value="superadmin">SuperAdmin</option>
                       </select>
                     ) : (
                       user.role
@@ -126,8 +141,30 @@ export default function UserList() {
                   </td>
 
                   <td className="border px-3 py-2 text-center">
-                   
-                      <div className="flex justify-center gap-2">
+                    <div className="flex flex-col gap-2 items-center">
+                      {/* Password for superadmin */}
+                      {editingUserId === user.id && isSuperAdmin && (
+                        <div className="relative w-full">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="New Password"
+                            className="border px-2 py-1 rounded w-full pr-8"
+                            value={form.password}
+                            onChange={(e) =>
+                              setForm({ ...form, password: e.target.value })
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                          >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
                         {editingUserId === user.id ? (
                           <button
                             onClick={() => handleUpdate(user.id)}
@@ -151,10 +188,18 @@ export default function UserList() {
                           Delete
                         </button>
                       </div>
-                
+                    </div>
                   </td>
                 </tr>
               ))}
+
+            {users.length === 0 && (
+              <tr>
+                <td colSpan="5" className="text-center py-4 text-gray-500">
+                  No users found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -85,9 +85,7 @@ export const verifyOtp = async (req, res) => {
   try {
     const { phone_number, otp } = req.body;
     if (!phone_number || !otp)
-      return res
-        .status(400)
-        .json({ message: "Phone number & OTP required" });
+      return res.status(400).json({ message: "Phone number & OTP required" });
 
     const result = await pool.query(
       `SELECT * FROM otp_store
@@ -111,13 +109,18 @@ export const verifyOtp = async (req, res) => {
       [phone_number]
     );
 
-    await pool.query(
+   
+    const insertResult = await pool.query(
       `INSERT INTO refresh_tokens (phone_number, token_hash, expires_at, created_at)
-       VALUES ($1,$2,$3,NOW())`,
+       VALUES ($1,$2,$3,NOW())
+       RETURNING id`,
       [phone_number, refreshTokenHash, refreshExpiresAt]
     );
 
+    const refreshTokenId = insertResult.rows[0].id;
+
     res.json({
+      id: refreshTokenId,
       phone_number,
       accessToken,
       accessTokenExpiry: ACCESS_TOKEN_EXPIRY,
@@ -130,6 +133,7 @@ export const verifyOtp = async (req, res) => {
     res.status(500).json({ message: "OTP verification failed" });
   }
 };
+
 //refresh tokens
 export const refreshToken = async (req, res) => {
   try {
