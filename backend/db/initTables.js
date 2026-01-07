@@ -73,7 +73,22 @@ export const initTables = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-
+//customers
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS customers (
+  id SERIAL PRIMARY KEY,
+  phone_number VARCHAR(20) UNIQUE,
+  name VARCHAR(100),
+  email VARCHAR(100),
+  gender VARCHAR(10),
+  dob DATE,
+  city VARCHAR(100),
+  state VARCHAR(100),
+  country VARCHAR(100),
+  pincode VARCHAR(10),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+`)
 
     console.log(" All tables created ");
   } catch (error) {

@@ -3,7 +3,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-export default function UserList() {
+export default function AdminsList() {
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
   const loggedRole = currentUser?.role?.toLowerCase();
@@ -22,7 +22,7 @@ export default function UserList() {
   });
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/signup/getUsersList`)
+    fetch(`${API_BASE_URL}/signup/getAdminsList`)
       .then((res) => res.json())
       .then(setUsers)
       .catch(console.error);
@@ -59,7 +59,7 @@ export default function UserList() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-green-700 mb-4">Users List</h2>
+      <h2 className="text-2xl font-bold text-green-700 mb-4">Admins List</h2>
 
      
       <input

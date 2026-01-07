@@ -20,7 +20,7 @@ import OtpAuth from "../components/OtpAuth";
 import Upload from "../components/Uploads";
 import Catalog from "../components/Catalogs";
 import Signup from "./Signup";
-import UserList from '../components/UserList'
+import AdminsList from '../components/AdminsList'
 
 function DashboardStats() {
   const stats = [
@@ -146,7 +146,7 @@ export default function Admin() {
             />
 <SidebarItem
   icon={CgUserList}
-  label="List of Users"
+  label="List of Admins"
   active={activeView === "users"}
   onClick={() => setActiveView("users")}
 />
@@ -160,7 +160,7 @@ export default function Admin() {
 
             <SidebarItem
               icon={FaUsers}
-              label="Customers"
+              label="List of Customers"
               active={activeView === "customers"}
               onClick={() => setActiveView("customers")}
             />
@@ -297,7 +297,7 @@ export default function Admin() {
         {activeView === "upload" && <Upload activeForm={activeForm} />}
         {activeView === "catalog" && <Catalog activeForm={activeForm} />}
         {activeView === "signup" && <Signup />}
-        {activeView === "users" && <UserList />}
+        {activeView === "users" && <AdminsList />}
 
 
         {activeView !== "dashboard" &&

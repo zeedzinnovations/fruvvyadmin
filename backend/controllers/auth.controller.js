@@ -6,13 +6,15 @@ const ACCESS_TOKEN_EXPIRY = "1d";
 const REFRESH_TOKEN_EXPIRY_DAYS = 90;
 const JWT_SECRET = process.env.JWT_SECRET || "please-set-a-secret";
 
+
 const generateOTP = () => crypto.randomInt(1000, 9999).toString();
 
-const generateRefreshTokenPlain = () =>
-  crypto.randomBytes(48).toString("hex");
 
-const hashToken = (token) =>
-  crypto.createHash("sha256").update(token).digest("hex");
+const generateRefreshTokenPlain = () => crypto.randomBytes(48).toString("hex");
+
+
+const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
+
 
 const generateAccessToken = (payload) =>
   jwt.sign(
@@ -28,7 +30,7 @@ const generateAccessToken = (payload) =>
 const refreshTokenExpiryDate = () =>
   new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-// middleware check access tokens
+
 export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -37,7 +39,6 @@ export const authenticate = (req, res, next) => {
   }
 
   const token = authHeader.split(" ")[1];
-
   if (!token) {
     return res.status(401).json({ message: "Malformed authorization header" });
   }
@@ -54,23 +55,21 @@ export const authenticate = (req, res, next) => {
   }
 };
 
-// send otp
+//send otp
+
 export const sendOtp = async (req, res) => {
   try {
     const { phone_number } = req.body;
-    if (!phone_number)
-      return res.status(400).json({ message: "Phone number required" });
+    if (!phone_number) return res.status(400).json({ message: "Phone number required" });
 
-    await pool.query(`DELETE FROM otp_store WHERE phone_number=$1`, [
-      phone_number,
-    ]);
+    await pool.query(`DELETE FROM otp_store WHERE phone_number=$1`, [phone_number]);
 
     const otp = generateOTP();
-    const expires_at = new Date(Date.now() + 5 * 60 * 1000);
+    const expires_at = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
     await pool.query(
       `INSERT INTO otp_store (phone_number, otp, expires_at, created_at)
-       VALUES ($1,$2,$3,NOW())`,
+       VALUES ($1, $2, $3, NOW())`,
       [phone_number, otp, expires_at]
     );
 
@@ -80,14 +79,15 @@ export const sendOtp = async (req, res) => {
     res.status(500).json({ message: "Failed to send OTP" });
   }
 };
-//verify otp
+
+//verify otp 
 export const verifyOtp = async (req, res) => {
   try {
     const { phone_number, otp } = req.body;
     if (!phone_number || !otp)
       return res.status(400).json({ message: "Phone number & OTP required" });
 
-    const result = await pool.query(
+    const otpResult = await pool.query(
       `SELECT * FROM otp_store
        WHERE phone_number=$1 AND otp=$2 AND expires_at > NOW()
        ORDER BY created_at DESC
@@ -95,38 +95,59 @@ export const verifyOtp = async (req, res) => {
       [phone_number, otp]
     );
 
-    if (!result.rows.length)
+    if (!otpResult.rows.length) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
 
-    const accessToken = generateAccessToken({ phone_number });
+    // Check if customer exists
+    const customerResult = await pool.query(
+      `SELECT id FROM customers WHERE phone_number=$1`,
+      [phone_number]
+    );
+
+    let customerId;
+
+    if (customerResult.rows.length) {
+      customerId = customerResult.rows[0].id;
+    } else {
+      const insertCustomer = await pool.query(
+        `INSERT INTO customers (phone_number, created_at)
+         VALUES ($1, NOW())
+         RETURNING id`,
+        [phone_number]
+      );
+      customerId = insertCustomer.rows[0].id;
+    }
+
+ 
+    const accessToken = generateAccessToken({
+      customerId,
+      phone_number,
+    });
 
     const plainRefreshToken = generateRefreshTokenPlain();
     const refreshTokenHash = hashToken(plainRefreshToken);
     const refreshExpiresAt = refreshTokenExpiryDate();
 
-    await pool.query(
-      `DELETE FROM refresh_tokens WHERE phone_number=$1`,
-      [phone_number]
-    );
-
    
-    const insertResult = await pool.query(
-      `INSERT INTO refresh_tokens (phone_number, token_hash, expires_at, created_at)
-       VALUES ($1,$2,$3,NOW())
-       RETURNING id`,
+    await pool.query(`DELETE FROM refresh_tokens WHERE phone_number=$1`, [phone_number]);
+
+    
+    await pool.query(
+      `INSERT INTO refresh_tokens
+       (phone_number, token_hash, expires_at, created_at)
+       VALUES ($1, $2, $3, NOW())`,
       [phone_number, refreshTokenHash, refreshExpiresAt]
     );
 
-    const refreshTokenId = insertResult.rows[0].id;
-
     res.json({
-      id: refreshTokenId,
+      customerId,
       phone_number,
       accessToken,
       accessTokenExpiry: ACCESS_TOKEN_EXPIRY,
       refreshToken: plainRefreshToken,
       refreshTokenExpiry: refreshExpiresAt,
-      message: "OTP verified",
+      message: "OTP verified successfully",
     });
   } catch (err) {
     console.error(err);
@@ -134,18 +155,17 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
+
 //refresh tokens
+
 export const refreshToken = async (req, res) => {
   try {
-    const { refreshToken: plainRefreshToken } = req.body;
-    if (!plainRefreshToken)
-      return res.status(401).json({ message: "No refresh token provided" });
-
-    const providedHash = hashToken(plainRefreshToken);
+    const { refreshToken } = req.body;
+    const hash = hashToken(refreshToken);
 
     const result = await pool.query(
-      `SELECT * FROM refresh_tokens WHERE token_hash=$1 LIMIT 1`,
-      [providedHash]
+      `SELECT * FROM refresh_tokens WHERE token_hash=$1`,
+      [hash]
     );
 
     if (!result.rows.length)
@@ -153,23 +173,12 @@ export const refreshToken = async (req, res) => {
 
     const tokenData = result.rows[0];
 
-    if (new Date() > tokenData.expires_at) {
-      await pool.query(
-        `DELETE FROM refresh_tokens WHERE id=$1`,
-        [tokenData.id]
-      );
-      return res.status(401).json({ message: "Refresh token expired" });
-    }
-
     const newAccessToken = generateAccessToken({
       phone_number: tokenData.phone_number,
     });
 
     res.json({
       accessToken: newAccessToken,
-      accessTokenExpiry: ACCESS_TOKEN_EXPIRY,
-      refreshToken: plainRefreshToken,
-      refreshTokenExpiry: tokenData.expires_at,
       message: "Access token refreshed",
     });
   } catch (err) {
@@ -177,27 +186,16 @@ export const refreshToken = async (req, res) => {
     res.status(500).json({ message: "Refresh token failed" });
   }
 };
-//get all otps
+
+//get otp list 
+
 export const getOtpList = async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT * FROM otp_store ORDER BY created_at DESC`
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch OTP list" });
-  }
+  const result = await pool.query(`SELECT * FROM otp_store`);
+  res.json(result.rows);
 };
 
+//get refresh tokens
 export const getAllRefreshTokens = async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT * FROM refresh_tokens ORDER BY created_at DESC`
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch refresh tokens" });
-  }
+  const result = await pool.query(`SELECT * FROM refresh_tokens`);
+  res.json(result.rows);
 };

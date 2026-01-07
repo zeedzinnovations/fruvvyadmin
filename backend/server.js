@@ -9,6 +9,7 @@ import productRoutes from "./routes/product.route.js";
 import login from './routes/login.route.js'
 import signup from './routes/signup.route.js'
 import { initTables } from "./db/initTables.js";
+import customerRoutes from './routes/customers.route.js'
 
 dotenv.config();
 
@@ -16,9 +17,9 @@ const app = express();
 app.use(cors({
   origin: [
 
-    // "http://localhost:5173"
-  "https://fruvvyadmin-1.onrender.com",
-  "https://fruvvyadmin.onrender.com"
+    "http://localhost:5173"
+  //   "https://fruvvyadmin-1.onrender.com",
+  // "https://fruvvyadmin.onrender.com"
 
    ],
   credentials: true
@@ -43,7 +44,7 @@ app.use("/login", login);
 // app.use("/api", cloudinaryRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
-
+app.use("/user", customerRoutes);
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {

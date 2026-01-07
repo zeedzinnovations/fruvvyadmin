@@ -15,7 +15,7 @@ export const signup = async (req, res) => {
   res.status(201).json({ user: result.rows[0] });
 };
 
-export const getUsersList = async (req, res) => {
+export const getAdminsList = async (req, res) => {
   const result = await pool.query(
     "SELECT id,name,email,role FROM users"
   );
