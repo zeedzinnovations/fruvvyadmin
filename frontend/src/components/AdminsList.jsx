@@ -70,9 +70,9 @@ export default function AdminsList() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-300 rounded-lg">
-          <thead className="bg-gray-100">
+     <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+              <thead className="bg-gray-100">
             <tr>
               <th className="border px-3 py-2">ID</th>
               <th className="border px-3 py-2">Name</th>

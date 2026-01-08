@@ -1,0 +1,273 @@
+import React, { useEffect, useState } from "react";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+function CustomerList() {
+  const [customerList, setCustomerList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingPhone, setEditingPhone] = useState(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    gender: "",
+    dob: "",
+    city: "",
+    state: "",
+    country: "",
+    pincode: "",
+  });
+
+  // Fetch customers
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/user/profile`);
+        const data = await res.json();
+        setCustomerList(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  // Search
+  const filteredCustomers = customerList.filter((c) =>
+    c.phone?.includes(searchTerm)
+  );
+
+  // Start edit
+  const startEdit = (customer) => {
+    setEditingPhone(customer.phone);
+    setForm({
+      name: customer.name || "",
+      email: customer.email || "",
+      gender: customer.gender || "",
+      dob: customer.dob || "",
+      city: customer.address?.city || "",
+      state: customer.address?.state || "",
+      country: customer.address?.country || "",
+      pincode: customer.address?.pincode || "",
+    });
+  };
+
+  // Update
+  const handleUpdate = async (phone) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/user/customer/${phone}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          gender: form.gender,
+          dob: form.dob,
+          address: {
+            city: form.city,
+            state: form.state,
+            country: form.country,
+            pincode: form.pincode,
+          },
+        }),
+      });
+
+      const updated = await res.json();
+
+      setCustomerList((prev) =>
+        prev.map((c) => (c.phone === phone ? updated : c))
+      );
+
+      setEditingPhone(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Delete
+  const handleDelete = async (phone) => {
+    if (!window.confirm("Delete this customer?")) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/user/customer/${phone}`, {
+        method: "DELETE",
+      });
+
+      setCustomerList((prev) =>
+        prev.filter((c) => c.phone !== phone)
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <section>
+      <h2 className="text-2xl font-bold mb-4 text-green-700">
+        Customers List
+      </h2>
+
+      <input
+        type="text"
+        placeholder="Search by phone number..."
+        className="mb-4 px-4 py-2 border-2 rounded-lg outline-none w-full max-w-sm"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+
+         <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+              <thead className="bg-gray-100">
+            <tr>
+                <th className="border px-3 py-2">ID</th>
+              <th className="border px-3 py-2">Name</th>
+              <th className="border px-3 py-2">Email</th>
+              <th className="border px-3 py-2">Phone</th>
+              <th className="border px-3 py-2">Gender</th>
+              <th className="border px-3 py-2">DOB</th>
+              <th className="border px-3 py-2">City</th>
+              <th className="border px-3 py-2">State</th>
+              <th className="border px-3 py-2">Country</th>
+              <th className="border px-3 py-2">Pincode</th>
+              <th className="border px-3 py-2">Created At</th>
+              <th className="border px-3 py-2">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredCustomers.map((customer,index) => (
+              <tr key={customer.phone}>
+                <td className="border px-3 py-2">{index + 1}</td>
+                <td className="border px-3 py-2">
+                  {editingPhone === customer.phone ? (
+                    <input
+                      className="border px-2 py-1 rounded w-full"
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm({ ...form, name: e.target.value })
+                      }
+                    />
+                  ) : (
+                    customer.name
+                  )}
+                </td>
+
+                <td className="border px-3 py-2">
+                  {editingPhone === customer.phone ? (
+                    <input
+                      className="border px-2 py-1 rounded w-full"
+                      value={form.email}
+                      onChange={(e) =>
+                        setForm({ ...form, email: e.target.value })
+                      }
+                    />
+                  ) : (
+                    customer.email
+                  )}
+                </td>
+
+                <td className="border px-3 py-2">{customer.phone}</td>
+
+              
+                <td className="border px-3 py-2">
+                  {editingPhone === customer.phone ? (
+                    <select
+                      className="border px-2 py-1 rounded w-full"
+                      value={form.gender}
+                      onChange={(e) =>
+                        setForm({ ...form, gender: e.target.value })
+                      }
+                    >
+                      <option value="">Select</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  ) : (
+                    customer.gender
+                  )}
+                </td>
+
+               
+                <td className="border px-3 py-2">
+                  {editingPhone === customer.phone ? (
+                    <input
+                      type="date"
+                      className="border px-2 py-1 rounded w-full"
+                      value={form.dob}
+                      onChange={(e) =>
+                        setForm({ ...form, dob: e.target.value })
+                      }
+                    />
+                  ) : (
+                    customer.dob
+                  )}
+                </td>
+
+               
+                {["city", "state", "country", "pincode"].map((field) => (
+                  <td key={field} className="border px-3 py-2">
+                    {editingPhone === customer.phone ? (
+                      <input
+                        className="border px-2 py-1 rounded w-full"
+                        value={form[field]}
+                        onChange={(e) =>
+                          setForm({ ...form, [field]: e.target.value })
+                        }
+                      />
+                    ) : (
+                      customer.address?.[field]
+                    )}
+                  </td>
+                ))}
+
+               
+                <td className="border px-3 py-2">
+                  {new Date(customer.created_at).toLocaleString()}
+                </td>
+
+              
+                <td className="border px-3 py-2 text-center">
+                  <div className="flex gap-2 justify-center">
+                    {editingPhone === customer.phone ? (
+                      <button
+                        onClick={() => handleUpdate(customer.phone)}
+                        className="bg-green-600 text-white px-3 py-1 rounded"
+                      >
+                        Save
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => startEdit(customer)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        Edit
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleDelete(customer.phone)}
+                      className="bg-red-600 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+
+            {filteredCustomers.length === 0 && (
+              <tr>
+                <td colSpan="11" className="text-center py-4">
+                  No customers found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export default CustomerList;

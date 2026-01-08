@@ -132,6 +132,80 @@ export const UserProfile = async (req, res) => {
     return res.status(500).json({ status: 0, message: "Profile failed" });
   }
 };
+//upadte by phone
+export const updateCustomer = async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const { name, email, gender, dob, address = {} } = req.body;
+
+    const updates = {
+      name,
+      email,
+      gender,
+      dob,
+      city: address.city,
+      state: address.state,
+      country: address.country,
+      pincode: address.pincode,
+    };
+
+    Object.keys(updates).forEach(
+      key =>
+        (updates[key] === undefined || updates[key] === "") &&
+        delete updates[key]
+    );
+
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    const fields = Object.keys(updates);
+    const values = Object.values(updates);
+
+    const setQuery = fields
+      .map((f, i) => `${f} = $${i + 1}`)
+      .join(", ");
+
+    const result = await pool.query(
+      `UPDATE customers SET ${setQuery}
+       WHERE phone_number = $${fields.length + 1}
+       RETURNING phone_number, name, email, gender, dob, city, state, country, pincode, created_at`,
+      [...values, phone]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    res.json(formatUser(result.rows[0]));
+  } catch (err) {
+    console.error("updateCustomerByPhone error:", err);
+    res.status(500).json({ message: "Failed to update customer" });
+  }
+};
+
+//delete customer by phone number
+
+export const deleteCustomer = async (req, res) => {
+  try {
+    const { phone } = req.params;
+
+    const result = await pool.query(
+      "DELETE FROM customers WHERE phone_number = $1 RETURNING phone_number",
+      [phone]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    res.json({ message: "Customer deleted successfully" });
+  } catch (err) {
+    console.error("deleteCustomerByPhone error:", err);
+    res.status(500).json({ message: "Failed to delete customer" });
+  }
+};
+
 
 // get customers List 
 export const getUsersList = async (req, res) => {
@@ -174,7 +248,7 @@ export const getUsersList = async (req, res) => {
 
 
 const formatUser = (user) => ({
-  customerId: user.id,
+ id:user.id ?? "",
   name: user.name ?? "",
   email: user.email || "",
   phone: user.phone_number || "",

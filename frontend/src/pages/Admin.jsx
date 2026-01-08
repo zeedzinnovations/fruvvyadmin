@@ -21,6 +21,7 @@ import Upload from "../components/Uploads";
 import Catalog from "../components/Catalogs";
 import Signup from "./Signup";
 import AdminsList from '../components/AdminsList'
+import CustomerList from '../components/CustomerList'
 
 function DashboardStats() {
   const stats = [
@@ -298,6 +299,7 @@ export default function Admin() {
         {activeView === "catalog" && <Catalog activeForm={activeForm} />}
         {activeView === "signup" && <Signup />}
         {activeView === "users" && <AdminsList />}
+           {activeView === "customers" && <CustomerList />}
 
 
         {activeView !== "dashboard" &&
