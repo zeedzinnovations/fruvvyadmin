@@ -3,7 +3,8 @@ import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-function Update({ activeForm }) {
+function Uploads({ activeForm }) {
+
   const [categoryName, setCategoryName] = useState("");
   const [categoryImage, setCategoryImage] = useState(null);
   const [categoryPreview, setCategoryPreview] = useState("");
@@ -19,6 +20,12 @@ function Update({ activeForm }) {
   const [productPreview, setProductPreview] = useState("");
   const [products, setProducts] = useState([]);
 
+
+  const [bannerName, setBannerName] = useState("");
+  const [bannerImage, setBannerImage] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState("");
+  const [bannerLoading, setBannerLoading] = useState(false);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
@@ -31,25 +38,17 @@ function Update({ activeForm }) {
       .then(setProducts);
   }, []);
 
-  // ================= ADD CATEGORY =================
+ 
   const submitCategory = async () => {
-    if (!categoryName.trim()) {
-      return alert("Enter category name");
-    }
+    if (!categoryName.trim()) return alert("Enter category name");
 
-    // ✅ Case-insensitive duplicate check
-    const categoryExists = categories.some(
+    const exists = categories.some(
       (cat) =>
-        cat.name.trim().toLowerCase() ===
-        categoryName.trim().toLowerCase()
+        cat.name.trim().toLowerCase() === categoryName.trim().toLowerCase()
     );
-
-    if (categoryExists) {
-      return alert("Category already exists");
-    }
+    if (exists) return alert("Category already exists");
 
     let imageUrl = "";
-
     if (categoryImage) {
       imageUrl = await uploadToCloudinary(categoryImage, "categories");
       if (!imageUrl) return alert("Image upload failed");
@@ -65,7 +64,6 @@ function Update({ activeForm }) {
     });
 
     alert("Category added successfully");
-
     setCategoryName("");
     setCategoryImage(null);
     setCategoryPreview("");
@@ -74,14 +72,11 @@ function Update({ activeForm }) {
     setCategories(await res.json());
   };
 
-  // ================= ADD PRODUCT =================
   const submitProduct = async () => {
-    if (!productName || !categoryId) {
+    if (!productName || !categoryId)
       return alert("Fill required fields");
-    }
 
     let imageUrl = "";
-
     if (productImage) {
       imageUrl = await uploadToCloudinary(productImage, "products");
       if (!imageUrl) return alert("Image upload failed");
@@ -116,7 +111,48 @@ function Update({ activeForm }) {
     setProducts(await res.json());
   };
 
-  // Remove duplicate categories if API returns duplicates
+
+const submitBanner = async () => {
+  if (!bannerName.trim()) return alert("Enter banner name");
+  if (!bannerImage) return alert("Select banner image");
+
+  try {
+    setBannerLoading(true);
+
+   
+    const imageUrl = await uploadToCloudinary(bannerImage, "banners");
+    if (!imageUrl) return alert("Image upload failed");
+
+    
+    const res = await fetch(`${API_BASE_URL}/api/banners`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: bannerName.trim(),
+        image_url: imageUrl,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Server error:", errText);
+      throw new Error("Failed to save banner");
+    }
+
+    alert("Banner uploaded successfully");
+
+    setBannerName("");
+    setBannerImage(null);
+    setBannerPreview("");
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  } finally {
+    setBannerLoading(false);
+  }
+};
+
+
   const uniqueCategories = Object.values(
     categories.reduce((acc, cat) => {
       acc[cat.id] = cat;
@@ -126,7 +162,8 @@ function Update({ activeForm }) {
 
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
-      {/* ================= CATEGORY FORM ================= */}
+
+{/* category form */}
       {activeForm === "category" && (
         <div className="w-md bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
@@ -145,12 +182,9 @@ function Update({ activeForm }) {
             type="file"
             accept="image/*"
             onChange={(e) => {
-              setCategoryImage(e.target.files[0]);
-              setCategoryPreview(
-                e.target.files[0]
-                  ? URL.createObjectURL(e.target.files[0])
-                  : ""
-              );
+              const file = e.target.files[0];
+              setCategoryImage(file);
+              setCategoryPreview(file ? URL.createObjectURL(file) : "");
             }}
           />
 
@@ -167,7 +201,7 @@ function Update({ activeForm }) {
         </div>
       )}
 
-      {/* ================= PRODUCT FORM ================= */}
+      {/* product form */}
       {activeForm === "product" && (
         <div className="w-150 bg-white border-2 border-green-700 rounded-xl p-8">
           <h2 className="text-2xl font-bold text-green-800 mb-6">
@@ -230,12 +264,9 @@ function Update({ activeForm }) {
             type="file"
             accept="image/*"
             onChange={(e) => {
-              setProductImage(e.target.files[0]);
-              setProductPreview(
-                e.target.files[0]
-                  ? URL.createObjectURL(e.target.files[0])
-                  : ""
-              );
+              const file = e.target.files[0];
+              setProductImage(file);
+              setProductPreview(file ? URL.createObjectURL(file) : "");
             }}
             className="mb-4"
           />
@@ -255,12 +286,52 @@ function Update({ activeForm }) {
           </button>
         </div>
       )}
+
+      {/* banner image form*/}
+      {activeForm === "bannerimages" && (
+        <div className="w-md bg-white border-2 border-green-700 rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-green-800 mb-6">
+            Upload Banner Image
+          </h2>
+
+          <input
+            type="text"
+            placeholder="Banner Title"
+            value={bannerName}
+            onChange={(e) => setBannerName(e.target.value)}
+            className="w-full p-3 border rounded-lg mb-4"
+          />
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              setBannerImage(file);
+              setBannerPreview(file ? URL.createObjectURL(file) : "");
+            }}
+          />
+
+          {bannerPreview && (
+            <img
+              src={bannerPreview}
+              className="mt-4 h-32 rounded object-cover"
+            />
+          )}
+     
+
+
+          <button
+            onClick={submitBanner}
+            disabled={bannerLoading}
+            className="w-full bg-green-700 text-white py-3 rounded-lg mt-4 disabled:opacity-50"
+          >
+            {bannerLoading ? "Uploading..." : "Upload Banner"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export default Update;
-
-
-
-  
+export default Uploads;

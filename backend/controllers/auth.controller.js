@@ -2,7 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import pool from "../db/db.js";
 
-const ACCESS_TOKEN_EXPIRY = "1d";
+const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY_DAYS = 90;
 const JWT_SECRET = process.env.JWT_SECRET || "please-set-a-secret";
 

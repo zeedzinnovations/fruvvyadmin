@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 types.setTypeParser(1082, val => val);
 
 dotenv.config();
-const isProduction = process.env.NODE_ENV === "production";
+ const isProduction = process.env.NODE_ENV === "production";
 
 
 

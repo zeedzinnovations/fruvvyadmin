@@ -132,7 +132,59 @@ export const UserProfile = async (req, res) => {
     return res.status(500).json({ status: 0, message: "Profile failed" });
   }
 };
-//upadte by phone
+//get users list
+export const getUsersList= async (req, res) => {
+  try {
+    const customerId = req.headers.id;
+
+    
+    if (!customerId) {
+      const result = await pool.query(`
+        SELECT
+          id, name, email, phone_number, gender, dob::date AS dob,
+          city, state, country, pincode, created_at
+        FROM customers
+      `);
+
+      return res.json({
+        status: 1,
+        message: "All customers fetched successfully",
+        data: result.rows.map(formatUser)
+      });
+    }
+
+    
+    const result = await pool.query(
+      `
+      SELECT
+        id, name, email, phone_number, gender, dob::date AS dob,
+        city, state, country, pincode, created_at
+      FROM customers
+      WHERE id = $1
+      `,
+      [customerId]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        status: 0,
+        message: "Customer not found"
+      });
+    }
+
+    return res.json({
+      status: 1,
+      message: "Customer profile fetched successfully",
+      data: formatUser(result.rows[0])
+    });
+
+  } catch (err) {
+    console.error("getProfile error:", err);
+    res.status(500).json({ status: 0, message: "Failed to fetch profile" });
+  }
+};
+
+//update
 export const updateCustomer = async (req, res) => {
   try {
     const { phone } = req.params;
@@ -146,13 +198,11 @@ export const updateCustomer = async (req, res) => {
       city: address.city,
       state: address.state,
       country: address.country,
-      pincode: address.pincode,
+      pincode: address.pincode
     };
 
     Object.keys(updates).forEach(
-      key =>
-        (updates[key] === undefined || updates[key] === "") &&
-        delete updates[key]
+      key => (updates[key] == null || updates[key] === "") && delete updates[key]
     );
 
     if (!Object.keys(updates).length) {
@@ -167,9 +217,10 @@ export const updateCustomer = async (req, res) => {
       .join(", ");
 
     const result = await pool.query(
-      `UPDATE customers SET ${setQuery}
+      `UPDATE customers
+       SET ${setQuery}
        WHERE phone_number = $${fields.length + 1}
-       RETURNING phone_number, name, email, gender, dob, city, state, country, pincode, created_at`,
+       RETURNING *`,
       [...values, phone]
     );
 
@@ -179,13 +230,12 @@ export const updateCustomer = async (req, res) => {
 
     res.json(formatUser(result.rows[0]));
   } catch (err) {
-    console.error("updateCustomerByPhone error:", err);
+    console.error("updateCustomer error:", err);
     res.status(500).json({ message: "Failed to update customer" });
   }
 };
 
-//delete customer by phone number
-
+//delete
 export const deleteCustomer = async (req, res) => {
   try {
     const { phone } = req.params;
@@ -201,55 +251,14 @@ export const deleteCustomer = async (req, res) => {
 
     res.json({ message: "Customer deleted successfully" });
   } catch (err) {
-    console.error("deleteCustomerByPhone error:", err);
+    console.error("deleteCustomer error:", err);
     res.status(500).json({ message: "Failed to delete customer" });
   }
 };
 
-
-// get customers List 
-export const getUsersList = async (req, res) => {
-  try {
-    const { accesstoken, id } = req.headers;
-
-    let query = `
-      SELECT
-        id,
-        phone_number,
-        name,
-        email,
-        gender,
-        dob::date AS dob,
-        city,
-        state,
-        country,
-        pincode,
-        created_at
-      FROM customers
-    `;
-    const params = [];
-
-    if (accesstoken && id) {
-      jwt.verify(accesstoken, JWT_SECRET);
-      query += " WHERE id = $1";
-      params.push(id);
-    }
-
-    const result = await pool.query(query, params);
-
-    res.json(
-      result.rows.map(formatUser)
-    );
-  } catch (err) {
-    console.error("getUsersList error:", err);
-    res.status(500).json({ message: "Failed to fetch customers" });
-  }
-};
-
-
 const formatUser = (user) => ({
- id:user.id ?? "",
-  name: user.name ?? "",
+  id: user.id,
+  name: user.name || "",
   email: user.email || "",
   phone: user.phone_number || "",
   gender: user.gender || "",
@@ -258,7 +267,7 @@ const formatUser = (user) => ({
     city: user.city || "",
     state: user.state || "",
     country: user.country || "",
-    pincode: user.pincode || "",
+    pincode: user.pincode || ""
   },
-  created_at: user.created_at,
+  created_at: user.created_at
 });

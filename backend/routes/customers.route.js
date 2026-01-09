@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post("/profile", authenticateUser, UserProfile);
 router.get("/profile", getUsersList);
-router.put("/customer/:phone", updateCustomer);
-router.delete("/customer/:phone", deleteCustomer);
+router.put("/profile/:phone", updateCustomer);
+router.delete("/profile/:phone", deleteCustomer);
 
 export default router;

@@ -10,11 +10,13 @@ import {
   FaSignOutAlt,
   FaCloudUploadAlt,
   FaDollarSign,
-} from "react-icons/fa";
-import { GrCatalog } from "react-icons/gr";
+  FaBullhorn
+  } from "react-icons/fa";
+import { PiUserListFill } from "react-icons/pi";
+
 import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
-import { FiUsers } from "react-icons/fi";
-import { CgUserList } from "react-icons/cg";
+
+
 
 import OtpAuth from "../components/OtpAuth";
 import Upload from "../components/Uploads";
@@ -22,6 +24,8 @@ import Catalog from "../components/Catalogs";
 import Signup from "./Signup";
 import AdminsList from '../components/AdminsList'
 import CustomerList from '../components/CustomerList'
+import MegaOffers from '../components/MegaOffers'
+
 
 function DashboardStats() {
   const stats = [
@@ -140,24 +144,27 @@ export default function Admin() {
             />
 
             <SidebarItem
-              icon={FiUsers}
+              icon={FaUsers}
               label="Add User Admin"
               active={activeView === "signup"}
               onClick={() => setActiveView("signup")}
             />
 <SidebarItem
-  icon={CgUserList}
+  icon={PiUserListFill}
   label="List of Admins"
   active={activeView === "users"}
   onClick={() => setActiveView("users")}
 />
 
             <SidebarItem
-              icon={FaShoppingCart}
-              label="Orders"
-              active={activeView === "orders"}
-              onClick={() => setActiveView("orders")}
-            />
+  icon={FaBullhorn}
+  label="Mega Offers"
+  active={activeView === "megaoffers"}
+  onClick={() => {
+    setActiveView("megaoffers");
+    setActiveForm("megaoffer"); 
+  }}
+/>
 
             <SidebarItem
               icon={FaUsers}
@@ -242,6 +249,15 @@ export default function Admin() {
                   >
                     Upload Product
                   </li>
+                      <li
+                    onClick={() => {
+                      setActiveView("upload");
+                      setActiveForm("bannerimages");
+                    }}
+                    className="cursor-pointer hover:text-green-300"
+                  >
+                    Upload Images
+                  </li>
                 </ul>
               )}
             </li>
@@ -297,9 +313,16 @@ export default function Admin() {
         {activeView === "otp" && <OtpAuth />}
         {activeView === "upload" && <Upload activeForm={activeForm} />}
         {activeView === "catalog" && <Catalog activeForm={activeForm} />}
+        {activeView === "megaoffers" && <MegaOffers activeForm={activeForm} />}
+       
+
+
         {activeView === "signup" && <Signup />}
         {activeView === "users" && <AdminsList />}
            {activeView === "customers" && <CustomerList />}
+          
+
+
 
 
         {activeView !== "dashboard" &&

@@ -5,12 +5,14 @@ import cors from "cors";
 import authRoutes from "./routes/auth.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import productRoutes from "./routes/product.route.js";
-// import cloudinaryRoutes from "./routes/cloudinary.route.js";
+import cloudinaryRoutes from "./routes/cloudinary.route.js";
 import login from './routes/login.route.js'
 import signup from './routes/signup.route.js'
 import { initTables } from "./db/initTables.js";
 import customerRoutes from './routes/customers.route.js'
-
+import megaofferRoutes from './routes/megaoffer.route.js'
+import BannerImagesRoutes from './routes/banner.route.js'
+import homeRoutes from './routes/home.route.js'
 dotenv.config();
 
 const app = express();
@@ -30,9 +32,7 @@ app.use(cors({
 app.use(express.json());
 
 
-app.get("/", (req, res) => {
-  res.send("Welcome to Fruvvy Backend");
-});
+app.use("/", homeRoutes);
 
 app.get("/devapiService", (req, res) => {
   res.send(" Fruvvy Auth Service Running");
@@ -41,9 +41,14 @@ app.get("/devapiService", (req, res) => {
 app.use("/devapiService", authRoutes);
 app.use("/signup", signup);
 app.use("/login", login);
-// app.use("/api", cloudinaryRoutes);
+app.use("/api", cloudinaryRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
+app.use("/api", BannerImagesRoutes);
+
+
+
+app.use("/api", megaofferRoutes);
 app.use("/user", customerRoutes);
 const PORT = process.env.PORT || 5000;
 

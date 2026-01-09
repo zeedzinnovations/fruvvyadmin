@@ -18,26 +18,32 @@ function CustomerList() {
     pincode: "",
   });
 
-  // Fetch customers
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/user/profile`);
-        const data = await res.json();
-        setCustomerList(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchCustomers();
-  }, []);
+  const accessToken = localStorage.getItem("accessToken");
+  const id = localStorage.getItem("id");
 
-  // Search
-  const filteredCustomers = customerList.filter((c) =>
-    c.phone?.includes(searchTerm)
-  );
+useEffect(() => {
+  const fetchCustomers = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/user/profile`);
+      const result = await res.json();
 
-  // Start edit
+      setCustomerList(result.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchCustomers();
+}, []);
+
+  /* ================= SEARCH ================= */
+  const filteredCustomers = Array.isArray(customerList)
+    ? customerList.filter((c) =>
+        c.phone?.includes(searchTerm)
+      )
+    : [];
+
+  /* ================= START EDIT ================= */
   const startEdit = (customer) => {
     setEditingPhone(customer.phone);
     setForm({
@@ -52,12 +58,16 @@ function CustomerList() {
     });
   };
 
-  // Update
+  /* ================= UPDATE ================= */
   const handleUpdate = async (phone) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/user/customer/${phone}`, {
+      const res = await fetch(`${API_BASE_URL}/user/profile/${phone}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          accesstoken: accessToken,
+          id: id,
+        },
         body: JSON.stringify({
           name: form.name,
           email: form.email,
@@ -74,33 +84,49 @@ function CustomerList() {
 
       const updated = await res.json();
 
+      if (!res.ok) {
+        alert(updated.message || "Update failed");
+        return;
+      }
+
       setCustomerList((prev) =>
         prev.map((c) => (c.phone === phone ? updated : c))
       );
 
       setEditingPhone(null);
     } catch (err) {
-      console.error(err);
+      console.error("Update error:", err);
     }
   };
 
-  // Delete
+  /* ================= DELETE ================= */
   const handleDelete = async (phone) => {
     if (!window.confirm("Delete this customer?")) return;
 
     try {
-      await fetch(`${API_BASE_URL}/user/customer/${phone}`, {
+      const res = await fetch(`${API_BASE_URL}/user/profile/${phone}`, {
         method: "DELETE",
+        headers: {
+          accesstoken: accessToken,
+          id: id,
+        },
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.message || "Delete failed");
+        return;
+      }
 
       setCustomerList((prev) =>
         prev.filter((c) => c.phone !== phone)
       );
     } catch (err) {
-      console.error(err);
+      console.error("Delete error:", err);
     }
   };
 
+  /* ================= UI ================= */
   return (
     <section>
       <h2 className="text-2xl font-bold mb-4 text-green-700">
@@ -115,11 +141,11 @@ function CustomerList() {
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
-         <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
-              <thead className="bg-gray-100">
+      <div className="overflow-x-auto">
+        <table className="min-w-full border border-gray-300 rounded-lg">
+          <thead className="bg-gray-100">
             <tr>
-                <th className="border px-3 py-2">ID</th>
+              <th className="border px-3 py-2">ID</th>
               <th className="border px-3 py-2">Name</th>
               <th className="border px-3 py-2">Email</th>
               <th className="border px-3 py-2">Phone</th>
@@ -135,40 +161,28 @@ function CustomerList() {
           </thead>
 
           <tbody>
-            {filteredCustomers.map((customer,index) => (
+            {filteredCustomers.map((customer, index) => (
               <tr key={customer.phone}>
                 <td className="border px-3 py-2">{index + 1}</td>
-                <td className="border px-3 py-2">
-                  {editingPhone === customer.phone ? (
-                    <input
-                      className="border px-2 py-1 rounded w-full"
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm({ ...form, name: e.target.value })
-                      }
-                    />
-                  ) : (
-                    customer.name
-                  )}
-                </td>
 
-                <td className="border px-3 py-2">
-                  {editingPhone === customer.phone ? (
-                    <input
-                      className="border px-2 py-1 rounded w-full"
-                      value={form.email}
-                      onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
-                      }
-                    />
-                  ) : (
-                    customer.email
-                  )}
-                </td>
+                {["name", "email"].map((field) => (
+                  <td key={field} className="border px-3 py-2">
+                    {editingPhone === customer.phone ? (
+                      <input
+                        className="border px-2 py-1 rounded w-full"
+                        value={form[field]}
+                        onChange={(e) =>
+                          setForm({ ...form, [field]: e.target.value })
+                        }
+                      />
+                    ) : (
+                      customer[field]
+                    )}
+                  </td>
+                ))}
 
                 <td className="border px-3 py-2">{customer.phone}</td>
 
-              
                 <td className="border px-3 py-2">
                   {editingPhone === customer.phone ? (
                     <select
@@ -188,7 +202,6 @@ function CustomerList() {
                   )}
                 </td>
 
-               
                 <td className="border px-3 py-2">
                   {editingPhone === customer.phone ? (
                     <input
@@ -204,29 +217,26 @@ function CustomerList() {
                   )}
                 </td>
 
-               
-                {["city", "state", "country", "pincode"].map((field) => (
-                  <td key={field} className="border px-3 py-2">
+                {["city", "state", "country", "pincode"].map((f) => (
+                  <td key={f} className="border px-3 py-2">
                     {editingPhone === customer.phone ? (
                       <input
                         className="border px-2 py-1 rounded w-full"
-                        value={form[field]}
+                        value={form[f]}
                         onChange={(e) =>
-                          setForm({ ...form, [field]: e.target.value })
+                          setForm({ ...form, [f]: e.target.value })
                         }
                       />
                     ) : (
-                      customer.address?.[field]
+                      customer.address?.[f]
                     )}
                   </td>
                 ))}
 
-               
                 <td className="border px-3 py-2">
                   {new Date(customer.created_at).toLocaleString()}
                 </td>
 
-              
                 <td className="border px-3 py-2 text-center">
                   <div className="flex gap-2 justify-center">
                     {editingPhone === customer.phone ? (
@@ -244,7 +254,6 @@ function CustomerList() {
                         Edit
                       </button>
                     )}
-
                     <button
                       onClick={() => handleDelete(customer.phone)}
                       className="bg-red-600 text-white px-3 py-1 rounded"
@@ -258,7 +267,7 @@ function CustomerList() {
 
             {filteredCustomers.length === 0 && (
               <tr>
-                <td colSpan="11" className="text-center py-4">
+                <td colSpan="12" className="text-center py-4">
                   No customers found
                 </td>
               </tr>

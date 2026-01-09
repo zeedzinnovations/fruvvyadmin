@@ -24,6 +24,8 @@ export const getCategories = async (req, res) => {
   const result = await pool.query("SELECT * FROM categories");
   res.json(result.rows);
 };
+
+
 export const updateCategory = async (req, res) => {
   const { id } = req.params;
   const { name, image_url } = req.body;
@@ -60,7 +62,6 @@ export const deleteCategory = async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // Optionally, delete all products under this category
     await client.query("DELETE FROM products WHERE category_id = $1", [id]);
 
     // Delete the category by ID

@@ -59,6 +59,23 @@ export const initTables = async () => {
 );
     `);
 
+//mega offer table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS  mega_offers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+  price NUMERIC(10,2),
+  offer_price NUMERIC(10,2),
+  country VARCHAR(100),
+  unit VARCHAR(50),
+  description TEXT,
+  image_url TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+    `);
+
     
     //users
      await pool.query(`
@@ -75,7 +92,7 @@ export const initTables = async () => {
     `);
 //customers
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS customers (
+      CREATE TABLE IF NOT EXISTS customers(
   id SERIAL PRIMARY KEY,
   phone_number VARCHAR(20) UNIQUE,
   name VARCHAR(100),
@@ -89,6 +106,16 @@ export const initTables = async () => {
   created_at TIMESTAMP DEFAULT NOW()
 );
 `)
+//banner images
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS banners (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+    `);
 
     console.log(" All tables created ");
   } catch (error) {
