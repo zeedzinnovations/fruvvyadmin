@@ -36,14 +36,13 @@ useEffect(() => {
   fetchCustomers();
 }, []);
 
-  /* ================= SEARCH ================= */
+ 
   const filteredCustomers = Array.isArray(customerList)
     ? customerList.filter((c) =>
         c.phone?.includes(searchTerm)
       )
     : [];
 
-  /* ================= START EDIT ================= */
   const startEdit = (customer) => {
     setEditingPhone(customer.phone);
     setForm({
@@ -58,7 +57,7 @@ useEffect(() => {
     });
   };
 
-  /* ================= UPDATE ================= */
+
   const handleUpdate = async (phone) => {
     try {
       const res = await fetch(`${API_BASE_URL}/user/profile/${phone}`, {
@@ -99,7 +98,7 @@ useEffect(() => {
     }
   };
 
-  /* ================= DELETE ================= */
+
   const handleDelete = async (phone) => {
     if (!window.confirm("Delete this customer?")) return;
 
@@ -126,7 +125,6 @@ useEffect(() => {
     }
   };
 
-  /* ================= UI ================= */
   return (
     <section>
       <h2 className="text-2xl font-bold mb-4 text-green-700">
