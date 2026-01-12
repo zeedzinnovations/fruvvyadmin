@@ -19,9 +19,9 @@ const app = express();
 app.use(cors({
   origin: [
 
-    // "http://localhost:5173"
-    "https://fruvvyadmin-1.onrender.com",
-  "https://fruvvyadmin.onrender.com"
+    "http://localhost:5173"
+    // "https://fruvvyadmin-1.onrender.com",
+  // "https://fruvvyadmin.onrender.com"
 
    ],
   credentials: true
@@ -33,6 +33,9 @@ app.use(express.json());
 
 
 app.use("/", homeRoutes);
+app.get("/", (req, res) => {
+  res.send(" Fruvvy Auth Backend Service Running");
+});
 
 app.get("/devapiService", (req, res) => {
   res.send(" Fruvvy Auth Service Running");
@@ -45,9 +48,6 @@ app.use("/api", cloudinaryRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
 app.use("/api", BannerImagesRoutes);
-
-
-
 app.use("/api", megaofferRoutes);
 app.use("/user", customerRoutes);
 const PORT = process.env.PORT || 5000;

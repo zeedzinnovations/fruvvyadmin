@@ -2,7 +2,7 @@ import pool from "../db/db.js";
 
 export const addBannerImage = async (req, res) => {
   try {
-    console.log("BANNER BODY:", req.body);
+   
 
     const { title, image_url } = req.body;
 

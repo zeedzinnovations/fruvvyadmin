@@ -30,28 +30,39 @@ const generateAccessToken = (payload) =>
 const refreshTokenExpiryDate = () =>
   new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-
 export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
-
   if (!authHeader) {
-    return res.status(401).json({ message: "No access token provided" });
+    return res.status(401).json({ message: "No token provided" });
   }
 
   const token = authHeader.split(" ")[1];
-  if (!token) {
-    return res.status(401).json({ message: "Malformed authorization header" });
-  }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+
+  
+    const now = Math.floor(Date.now() / 1000);
+
+    if (decoded.exp <= now) {
+      return res.status(401).json({ message: "Access token expired" });
+    }
+
+    req.user = {
+      ...decoded,
+      expiresInSeconds: decoded.exp - now,
+    };
+
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Access token expired" });
+      return res.status(401).json({
+        message: "Access token expired",
+        expiredAt: err.expiredAt,
+      });
     }
-    return res.status(401).json({ message: "Invalid access token" });
+
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 

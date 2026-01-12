@@ -11,7 +11,7 @@ export const getHomeData = async (req, res) => {
     );
 
     const megaOffers = await pool.query(
-      "SELECT id, name, price,  offer_price  FROM mega_offers"
+         "SELECT * FROM mega_offers ORDER BY id"
     );
 
     res.json({

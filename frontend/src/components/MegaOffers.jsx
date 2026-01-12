@@ -31,9 +31,11 @@ function MegaOffers({ activeForm }) {
     let imageUrl = "";
 
     if (productImage) {
-      imageUrl = await uploadToCloudinary(productImage, "megaoffers");
+   imageUrl = await uploadToCloudinary(productImage, "megaoffers");
       if (!imageUrl) return alert("Image upload failed");
     }
+   
+
 
     await fetch(`${API_BASE_URL}/api/megaoffers`, {
       method: "POST",
