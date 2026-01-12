@@ -9,6 +9,9 @@ function Uploads({ activeForm }) {
   const [categoryImage, setCategoryImage] = useState(null);
   const [categoryPreview, setCategoryPreview] = useState("");
   const [categories, setCategories] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+
+
 
   const [productName, setProductName] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -18,7 +21,10 @@ function Uploads({ activeForm }) {
   const [description, setDescription] = useState("");
   const [productImage, setProductImage] = useState(null);
   const [productPreview, setProductPreview] = useState("");
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState("");
+
+
+  const [productLoading, setProductLoading] = useState(false);
 
 
   const [bannerName, setBannerName] = useState("");
@@ -39,14 +45,17 @@ function Uploads({ activeForm }) {
   }, []);
 
  
-  const submitCategory = async () => {
-    if (!categoryName.trim()) return alert("Enter category name");
+ const submitCategory = async () => {
+  if (!categoryName.trim()) return alert("Enter category name");
 
-    const exists = categories.some(
-      (cat) =>
-        cat.name.trim().toLowerCase() === categoryName.trim().toLowerCase()
-    );
-    if (exists) return alert("Category already exists");
+  const exists = categories.some(
+    (cat) =>
+      cat.name.trim().toLowerCase() === categoryName.trim().toLowerCase()
+  );
+  if (exists) return alert("Category already exists");
+
+  try {
+    setCategoryLoading(true);
 
     let imageUrl = "";
     if (categoryImage) {
@@ -64,17 +73,28 @@ function Uploads({ activeForm }) {
     });
 
     alert("Category added successfully");
+
     setCategoryName("");
     setCategoryImage(null);
     setCategoryPreview("");
 
     const res = await fetch(`${API_BASE_URL}/api/get-categories`);
     setCategories(await res.json());
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  } finally {
+    setCategoryLoading(false);
+  }
+};
 
-  const submitProduct = async () => {
-    if (!productName || !categoryId)
-      return alert("Fill required fields");
+
+const submitProduct = async () => {
+  if (!productName || !categoryId)
+    return alert("Fill required fields");
+
+  try {
+    setProductLoading(true);
 
     let imageUrl = "";
     if (productImage) {
@@ -109,7 +129,13 @@ function Uploads({ activeForm }) {
 
     const res = await fetch(`${API_BASE_URL}/api/get-products`);
     setProducts(await res.json());
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  } finally {
+    setProductLoading(false);
+  }
+};
 
 
 const submitBanner = async () => {
@@ -192,12 +218,14 @@ const submitBanner = async () => {
             <img src={categoryPreview} className="mt-4 h-32 rounded" />
           )}
 
-          <button
-            onClick={submitCategory}
-            className="w-full bg-green-700 text-white py-3 rounded-lg mt-4"
-          >
-            Submit Category
-          </button>
+         <button
+  onClick={submitCategory}
+  disabled={categoryLoading}
+  className="w-full bg-green-700 text-white py-3 rounded-lg mt-4 disabled:opacity-50"
+>
+  {categoryLoading ? "Uploading..." : "Submit Category"}
+</button>
+
         </div>
       )}
 
@@ -278,12 +306,14 @@ const submitBanner = async () => {
             />
           )}
 
-          <button
-            onClick={submitProduct}
-            className="w-full bg-green-700 text-white p-3 rounded-xl"
-          >
-            Add Product
-          </button>
+         <button
+  onClick={submitProduct}
+  disabled={productLoading}
+  className="w-full bg-green-700 text-white p-3 rounded-xl disabled:opacity-50"
+>
+  {productLoading ? "Uploading..." : "Upload Product"}
+</button>
+
         </div>
       )}
 

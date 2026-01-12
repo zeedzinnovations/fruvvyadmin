@@ -2,19 +2,15 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import pool from "../db/db.js";
 
-const ACCESS_TOKEN_EXPIRY = "15m";
+const ACCESS_TOKEN_EXPIRY = "1m";
 const REFRESH_TOKEN_EXPIRY_DAYS = 90;
 const JWT_SECRET = process.env.JWT_SECRET || "please-set-a-secret";
 
 
+
 const generateOTP = () => crypto.randomInt(1000, 9999).toString();
-
-
 const generateRefreshTokenPlain = () => crypto.randomBytes(48).toString("hex");
-
-
 const hashToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
-
 
 const generateAccessToken = (payload) =>
   jwt.sign(
@@ -30,45 +26,39 @@ const generateAccessToken = (payload) =>
 const refreshTokenExpiryDate = () =>
   new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-export const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader)
-    return res.status(401).json({ message: "No token provided" });
 
-  const token = authHeader.split(" ")[1];
+export const authMiddleware = (required = true) => {
+  return (req, res, next) => {
+    const authHeader = req.headers.authorization;
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    // 🔥 THIS IS THE EXPIRY CHECK
-    const now = Math.floor(Date.now() / 1000);
-    const expiresInSeconds = decoded.exp - now;
-
-    if (expiresInSeconds <= 0) {
-      return res.status(401).json({ message: "Access token expired" });
+    if (!authHeader) {
+      if (required) return res.status(401).json({ message: "No token provided" });
+      req.user = null; 
+      return next();
     }
 
-    // Token is valid
-    req.user = {
-      ...decoded,
-      expiresInSeconds,
-    };
+    const token = authHeader.split(" ")[1];
 
-    next();
-  } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({
-        message: "Access token expired",
-        expiredAt: err.expiredAt,
-      });
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const now = Math.floor(Date.now() / 1000);
+      const expiresInSeconds = decoded.exp - now;
+
+      if (expiresInSeconds <= 0) {
+        return res.status(401).json({ message: "Access token expired" });
+      }
+
+      req.user = { ...decoded, expiresInSeconds };
+      next();
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Access token expired", expiredAt: err.expiredAt });
+      }
+      return res.status(401).json({ message: "Invalid token" });
     }
-
-    return res.status(401).json({ message: "Invalid token" });
-  }
+  };
 };
-
-
-//send otp
+// send otp
 
 export const sendOtp = async (req, res) => {
   try {
@@ -92,8 +82,8 @@ export const sendOtp = async (req, res) => {
     res.status(500).json({ message: "Failed to send OTP" });
   }
 };
+//verify otp
 
-//verify otp 
 export const verifyOtp = async (req, res) => {
   try {
     const { phone_number, otp } = req.body;
@@ -132,20 +122,13 @@ export const verifyOtp = async (req, res) => {
       customerId = insertCustomer.rows[0].id;
     }
 
- 
-    const accessToken = generateAccessToken({
-      customerId,
-      phone_number,
-    });
-
+    const accessToken = generateAccessToken({ customerId, phone_number });
     const plainRefreshToken = generateRefreshTokenPlain();
     const refreshTokenHash = hashToken(plainRefreshToken);
     const refreshExpiresAt = refreshTokenExpiryDate();
 
-   
     await pool.query(`DELETE FROM refresh_tokens WHERE phone_number=$1`, [phone_number]);
 
-    
     await pool.query(
       `INSERT INTO refresh_tokens
        (phone_number, token_hash, expires_at, created_at)
@@ -167,7 +150,6 @@ export const verifyOtp = async (req, res) => {
     res.status(500).json({ message: "OTP verification failed" });
   }
 };
-
 
 //refresh tokens
 
@@ -200,14 +182,38 @@ export const refreshToken = async (req, res) => {
   }
 };
 
-//get otp list 
+//get otp
 
 export const getOtpList = async (req, res) => {
-  const result = await pool.query(`SELECT * FROM otp_store`);
-  res.json(result.rows);
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+    
+      const result = await pool.query(`SELECT * FROM otp_store`);
+      return res.json(result.rows);
+    }
+
+
+    const token = authHeader.split(" ")[1];
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      
+      const result = await pool.query(`SELECT * FROM otp_store`);
+      return res.json(result.rows);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Access token expired", expiredAt: err.expiredAt });
+      }
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch OTPs" });
+  }
 };
 
-//get refresh tokens
+//refresh tokens
+
 export const getAllRefreshTokens = async (req, res) => {
   const result = await pool.query(`SELECT * FROM refresh_tokens`);
   res.json(result.rows);

@@ -15,6 +15,7 @@ function MegaOffers({ activeForm }) {
   const [description, setDescription] = useState("");
   const [productImage, setProductImage] = useState(null);
   const [productPreview, setProductPreview] = useState("");
+const [megaOfferLoading, setMegaOfferLoading] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
@@ -24,20 +25,20 @@ function MegaOffers({ activeForm }) {
 
 
   const submitMegaOffer = async () => {
-    if (!productName || !categoryId || !price || !offerPrice) {
-      return alert("Please fill all required fields");
-    }
+  if (!productName || !categoryId || !price || !offerPrice) {
+    return alert("Please fill all required fields");
+  }
+
+  try {
+    setMegaOfferLoading(true);
 
     let imageUrl = "";
-
     if (productImage) {
-   imageUrl = await uploadToCloudinary(productImage, "megaoffers");
+      imageUrl = await uploadToCloudinary(productImage, "megaoffers");
       if (!imageUrl) return alert("Image upload failed");
     }
-   
 
-
-    await fetch(`${API_BASE_URL}/api/megaoffers`, {
+    const res = await fetch(`${API_BASE_URL}/api/megaoffers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -52,6 +53,12 @@ function MegaOffers({ activeForm }) {
       }),
     });
 
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Server error:", errText);
+      throw new Error("Failed to add mega offer");
+    }
+
     alert("Mega Offer Product Added Successfully");
 
     setProductName("");
@@ -63,8 +70,13 @@ function MegaOffers({ activeForm }) {
     setDescription("");
     setProductImage(null);
     setProductPreview("");
-  };
-
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  } finally {
+    setMegaOfferLoading(false);
+  }
+};
 
   const uniqueCategories = Object.values(
     categories.reduce((acc, cat) => {
@@ -163,12 +175,14 @@ function MegaOffers({ activeForm }) {
             />
           )}
 
-          <button
-            onClick={submitMegaOffer}
-            className="w-full bg-green-700 text-white p-3 rounded-xl"
-          >
-            Add Mega Offer
-          </button>
+        <button
+  onClick={submitMegaOffer}
+  disabled={megaOfferLoading}
+  className="w-full bg-green-700 text-white p-3 rounded-xl disabled:opacity-50"
+>
+  {megaOfferLoading ? "Uploading..." : "Upload Mega Offer"}
+</button>
+
         </div>
       )}
     </div>
