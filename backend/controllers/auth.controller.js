@@ -32,25 +32,26 @@ const refreshTokenExpiryDate = () =>
 
 export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
+  if (!authHeader)
     return res.status(401).json({ message: "No token provided" });
-  }
 
   const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-  
+    // 🔥 THIS IS THE EXPIRY CHECK
     const now = Math.floor(Date.now() / 1000);
+    const expiresInSeconds = decoded.exp - now;
 
-    if (decoded.exp <= now) {
+    if (expiresInSeconds <= 0) {
       return res.status(401).json({ message: "Access token expired" });
     }
 
+    // Token is valid
     req.user = {
       ...decoded,
-      expiresInSeconds: decoded.exp - now,
+      expiresInSeconds,
     };
 
     next();
@@ -65,6 +66,7 @@ export const authenticate = (req, res, next) => {
     return res.status(401).json({ message: "Invalid token" });
   }
 };
+
 
 //send otp
 
