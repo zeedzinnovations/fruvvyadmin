@@ -1,18 +1,13 @@
 import React, { useState } from "react";
-import LoadingBar from "react-top-loading-bar";
 
 import {
   FaTachometerAlt,
   FaBoxOpen,
-  FaShoppingCart,
   FaUsers,
   FaChartBar,
-  FaFileInvoiceDollar,
-  FaCog,
   FaSignOutAlt,
   FaCloudUploadAlt,
-  FaDollarSign,
-  FaBullhorn
+  FaBullhorn,
 } from "react-icons/fa";
 import { PiUserListFill } from "react-icons/pi";
 import { RiArrowDropDownLine, RiArrowDropUpLine } from "react-icons/ri";
@@ -24,45 +19,24 @@ import Signup from "./Signup";
 import AdminsList from "../components/AdminsList";
 import CustomerList from "../components/CustomerList";
 import MegaOffers from "../components/MegaOffers";
-
-
-
-function DashboardStats() {
-  const stats = [
-    { label: "Products", value: 120, icon: FaBoxOpen },
-    { label: "Orders", value: 56, icon: FaShoppingCart },
-    { label: "Customers", value: 230, icon: FaUsers },
-    { label: "Revenue", value: "$4,800", icon: FaDollarSign },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
-      {stats.map((item, index) => (
-        <div key={index} className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-4">
-          <item.icon className="text-green-700 text-2xl" />
-          <div>
-            <div className="text-sm text-gray-500">{item.label}</div>
-            <div className="text-xl font-bold text-green-700">{item.value}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+import Dashboard from "../components/Dashboard";
 
 function SidebarItem({ icon: Icon, label, active, onClick }) {
   return (
     <li
       onClick={onClick}
       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition
-      ${active ? "bg-white text-green-700 font-semibold" : "text-white hover:bg-white hover:text-green-700"}`}
+        ${
+          active
+            ? "bg-white text-green-700 font-semibold"
+            : "text-white hover:bg-white hover:text-green-700"
+        }`}
     >
       <Icon />
       <span>{label}</span>
     </li>
   );
 }
-
 
 export default function Admin() {
   const user = JSON.parse(localStorage.getItem("user")) || {
@@ -73,27 +47,30 @@ export default function Admin() {
   const [activeView, setActiveView] = useState("dashboard");
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [megaOfferOpen, setMegaOfferOpen] = useState(false);
   const [activeForm, setActiveForm] = useState("");
-  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const handleNavigation = (view, form = "") => {
-    setProgress(30);
-    setActiveView(view);
-    setActiveForm(form);
-    setTimeout(() => setProgress(100), 500);
+    setLoading(true);
+
+    setTimeout(() => {
+      setActiveView(view);
+      setActiveForm(form);
+      setLoading(false);
+    }, 500);
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FFFA]">
+    <div className="flex min-h-screen bg-[#F8FFFA] relative">
+      {/* Loader*/}
+      {loading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="w-16 h-16 border-4 border-green-200 border-t-green-700 rounded-full animate-spin"></div>
+        </div>
+      )}
 
-    
-      <LoadingBar
-        color="#15803d"
-        progress={progress}
-        onLoaderFinished={() => setProgress(2)}
-      />
-
-      {/* SIDEBAR */}
+     
       <aside className="w-72 bg-green-700 text-white p-5 flex flex-col justify-between">
         <div>
           <h1 className="text-xl bg-white text-green-700 py-3 rounded-xl flex justify-center gap-2 mb-6">
@@ -101,7 +78,6 @@ export default function Admin() {
           </h1>
 
           <ul className="space-y-2">
-
             <SidebarItem
               icon={FaTachometerAlt}
               label="Dashboard"
@@ -123,12 +99,37 @@ export default function Admin() {
               onClick={() => handleNavigation("users")}
             />
 
-            <SidebarItem
-              icon={FaBullhorn}
-              label="Mega Offers"
-              active={activeView === "megaoffers"}
-              onClick={() => handleNavigation("megaoffers", "megaoffer")}
-            />
+            <li>
+              <div
+                onClick={() => setMegaOfferOpen(!megaOfferOpen)}
+                className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white hover:text-green-700 rounded-lg"
+              >
+                <FaBullhorn/> Mega Offers
+                <span className="ml-auto">
+                  {uploadOpen ? <RiArrowDropUpLine /> : <RiArrowDropDownLine />}
+                </span>
+              </div>
+
+              {megaOfferOpen && (
+                <ul className="ml-8 mt-2 space-y-2 text-sm">
+                 <li
+  onClick={() => handleNavigation("megaoffers", "megaoffer")}
+  className="cursor-pointer hover:text-green-300"
+>
+  Upload Mega Offer
+</li>
+
+<li
+  onClick={() => handleNavigation("megaoffers", "megaoffer_list")}
+  className="cursor-pointer hover:text-green-300"
+>
+  Mega Offers List
+</li>
+
+                 
+                </ul>
+              )}
+            </li>
 
             <SidebarItem
               icon={FaUsers}
@@ -144,7 +145,6 @@ export default function Admin() {
               onClick={() => handleNavigation("otp")}
             />
 
-            {/* PRODUCTS */}
             <li>
               <div
                 onClick={() => setCatalogOpen(!catalogOpen)}
@@ -158,17 +158,35 @@ export default function Admin() {
 
               {catalogOpen && (
                 <ul className="ml-8 mt-2 space-y-2 text-sm">
-                  <li onClick={() => handleNavigation("catalog", "category_list")} className="cursor-pointer hover:text-green-300">
+                  <li
+                    onClick={() =>
+                      handleNavigation("catalog", "category_list")
+                    }
+                    className="cursor-pointer hover:text-green-300"
+                  >
                     Category List
                   </li>
-                  <li onClick={() => handleNavigation("catalog", "product_list")} className="cursor-pointer hover:text-green-300">
+                  <li
+                    onClick={() =>
+                      handleNavigation("catalog", "product_list")
+                    }
+                    className="cursor-pointer hover:text-green-300"
+                  >
                     Product List
+                  </li>
+                  <li
+                    onClick={() =>
+                      handleNavigation("catalog", "banner_list")
+                    }
+                    className="cursor-pointer hover:text-green-300"
+                  >
+                    Banner List
                   </li>
                 </ul>
               )}
             </li>
 
-            {/* UPLOAD */}
+         
             <li>
               <div
                 onClick={() => setUploadOpen(!uploadOpen)}
@@ -182,23 +200,33 @@ export default function Admin() {
 
               {uploadOpen && (
                 <ul className="ml-8 mt-2 space-y-2 text-sm">
-                  <li onClick={() => handleNavigation("upload", "category")} className="cursor-pointer hover:text-green-300">
+                  <li
+                    onClick={() => handleNavigation("upload", "category")}
+                    className="cursor-pointer hover:text-green-300"
+                  >
                     Upload Category
                   </li>
-                  <li onClick={() => handleNavigation("upload", "product")} className="cursor-pointer hover:text-green-300">
+                  <li
+                    onClick={() => handleNavigation("upload", "product")}
+                    className="cursor-pointer hover:text-green-300"
+                  >
                     Upload Product
                   </li>
-                  <li onClick={() => handleNavigation("upload", "bannerimages")} className="cursor-pointer hover:text-green-300">
-                    Upload Images
+                  <li
+                    onClick={() =>
+                      handleNavigation("upload", "bannerimages")
+                    }
+                    className="cursor-pointer hover:text-green-300"
+                  >
+                    Banner Images
                   </li>
                 </ul>
               )}
             </li>
-
           </ul>
         </div>
 
-        {/* FOOTER */}
+      
         <div>
           <div className="bg-white text-green-700 p-3 rounded-md">
             <div className="font-semibold">{user.name}</div>
@@ -219,13 +247,7 @@ export default function Admin() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 p-8">
-        {activeView === "dashboard" && (
-          <>
-            <h1 className="text-3xl font-bold text-green-700">Dashboard Overview</h1>
-            <DashboardStats />
-          </>
-        )}
-
+        {activeView === "dashboard" && <Dashboard />}
         {activeView === "otp" && <OtpAuth />}
         {activeView === "upload" && <Upload activeForm={activeForm} />}
         {activeView === "catalog" && <Catalog activeForm={activeForm} />}

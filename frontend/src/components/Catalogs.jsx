@@ -28,6 +28,12 @@ function Catalogs({ activeForm }) {
   const [categoryImageFile, setCategoryImageFile] = useState(null);
   const [productImageFile, setProductImageFile] = useState(null);
 
+const [banners, setBanners] = useState([]);
+const [editingBannerId, setEditingBannerId] = useState(null);
+const [bannerForm, setBannerForm] = useState({ title: "", image_url: "" });
+const [bannerImageFile, setBannerImageFile] = useState(null);
+
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
@@ -39,6 +45,13 @@ function Catalogs({ activeForm }) {
       .then((res) => res.json())
       .then(setProducts);
   }, []);
+
+  useEffect(() => {
+  fetch(`${API_BASE_URL}/api/get-banners`)
+    .then(res => res.json())
+    .then(setBanners);
+}, []);
+
 
   // DELETE
   const handleDeleteCategory = async (id) => {
@@ -123,6 +136,49 @@ function Catalogs({ activeForm }) {
     setProductImageFile(null);
   };
 
+  const startEditBanner = (banner) => {
+  setEditingBannerId(banner.id);
+  setBannerForm({ title: banner.title, image_url: banner.image_url });
+  setBannerImageFile(null);
+};
+
+const handleUpdateBanner = async (id) => {
+  let imageUrl = bannerForm.image_url;
+
+  if (bannerImageFile) {
+    imageUrl = await uploadToCloudinary(bannerImageFile, "banners");
+    if (!imageUrl) return alert("Image upload failed");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/banners/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: bannerForm.title,
+      image_url: imageUrl,
+    }),
+  });
+
+  const updated = await res.json();
+
+  setBanners((prev) =>
+    prev.map((b) => (b.id === id ? updated.banner : b))
+  );
+
+  setEditingBannerId(null);
+};
+
+const handleDeleteBanner = async (id) => {
+  if (!window.confirm("Delete this banner?")) return;
+
+  await fetch(`${API_BASE_URL}/api/banners/${id}`, {
+    method: "DELETE",
+  });
+
+  setBanners((prev) => prev.filter((b) => b.id !== id));
+};
+
+
   return (
     <div>
 {/* category table */}
@@ -141,7 +197,7 @@ function Catalogs({ activeForm }) {
           />
 
           <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+            <table className="min-w-full border border-gray-300 rounded-lg ">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-3 border text-left">ID</th>
@@ -285,7 +341,7 @@ function Catalogs({ activeForm }) {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+            <table className="min-w-full border border-gray-300 rounded-lg ">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="border px-3 py-2">ID</th>
@@ -459,6 +515,104 @@ function Catalogs({ activeForm }) {
           </div>
         </section>
       )}
+      {activeForm === "banner_list" && (
+  <section>
+    <h2 className="text-2xl font-bold mb-4 text-green-700">
+      Banner List
+    </h2>
+
+    <div className="overflow-x-auto">
+      <table className="min-w-full border border-gray-300 rounded-lg">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border px-4 py-2">ID</th>
+            <th className="border px-4 py-2">Title</th>
+            <th className="border px-4 py-2">Image</th>
+            <th className="border px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {banners.map((banner, index) => (
+            <tr key={banner.id}>
+              <td className="border px-4 py-2">{index + 1}</td>
+
+              <td className="border px-4 py-2">
+                {editingBannerId === banner.id ? (
+                  <input
+                    className="border px-2 py-1 rounded w-full"
+                    value={bannerForm.title}
+                    onChange={(e) =>
+                      setBannerForm({ ...bannerForm, title: e.target.value })
+                    }
+                  />
+                ) : (
+                  banner.title
+                )}
+              </td>
+
+              <td className="border px-4 py-2 text-center">
+                {editingBannerId === banner.id ? (
+                  <>
+                    <input
+                      type="file"
+                      onChange={(e) =>
+                        setBannerImageFile(e.target.files[0])
+                      }
+                    />
+                    {(bannerImageFile || bannerForm.image_url) && (
+                      <img
+                        src={
+                          bannerImageFile
+                            ? URL.createObjectURL(bannerImageFile)
+                            : bannerForm.image_url
+                        }
+                        className="w-20 h-12 mx-auto mt-2 rounded object-cover"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <img
+                    src={banner.image_url}
+                    className="w-20 h-12 mx-auto rounded object-cover"
+                  />
+                )}
+              </td>
+
+              <td className="border px-4 py-2 text-center">
+                <div className="flex justify-center gap-2">
+                  {editingBannerId === banner.id ? (
+                    <button
+                      onClick={() => handleUpdateBanner(banner.id)}
+                      className="bg-green-600 text-white px-3 py-1 rounded"
+                    >
+                      Save
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => startEditBanner(banner)}
+                      className="bg-blue-600 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => handleDeleteBanner(banner.id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
+
 
     </div>
   );

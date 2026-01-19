@@ -116,7 +116,41 @@ export const initTables = async () => {
 );
 
     `);
+//cart
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS carts (
+  id SERIAL PRIMARY KEY,
+  customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+  status VARCHAR(20) DEFAULT 'ACTIVE',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP
+);
 
+`)
+
+//cart items
+
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS cart_items (
+  id SERIAL PRIMARY KEY,
+
+  cart_id INTEGER REFERENCES carts(id) ON DELETE CASCADE,
+
+  product_id INTEGER REFERENCES products(id),
+  category_id INTEGER REFERENCES categories(id),
+
+  unit VARCHAR(50),
+  country VARCHAR(100),
+
+  price NUMERIC(10,2),
+  quantity NUMERIC(10,2),
+  total NUMERIC(10,2),
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE(cart_id, product_id)
+);
+`)
     console.log(" All tables created ");
   } catch (error) {
     console.error("Table creation failed:", error.message);

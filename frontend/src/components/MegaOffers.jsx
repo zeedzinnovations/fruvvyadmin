@@ -16,12 +16,24 @@ function MegaOffers({ activeForm }) {
   const [productImage, setProductImage] = useState(null);
   const [productPreview, setProductPreview] = useState("");
 const [megaOfferLoading, setMegaOfferLoading] = useState(false);
+const [megaOffers, setMegaOffers] = useState([]);
+const [editingId, setEditingId] = useState(null);
+const [editForm, setEditForm] = useState({});
+const [editImageFile, setEditImageFile] = useState(null);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/get-categories`)
       .then((res) => res.json())
       .then(setCategories);
   }, []);
+
+  useEffect(() => {
+  if (activeForm === "megaoffer_list") {
+    fetch(`${API_BASE_URL}/api/megaoffers`)
+      .then(res => res.json())
+      .then(setMegaOffers);
+  }
+}, [activeForm]);
 
 
   const submitMegaOffer = async () => {
@@ -84,6 +96,44 @@ const [megaOfferLoading, setMegaOfferLoading] = useState(false);
       return acc;
     }, {})
   );
+
+  const startEditOffer = (offer) => {
+  setEditingId(offer.id);
+  setEditForm(offer);
+  setEditImageFile(null);
+};
+
+const handleUpdateOffer = async (id) => {
+  let imageUrl = editForm.image_url;
+
+  if (editImageFile) {
+    imageUrl = await uploadToCloudinary(editImageFile, "megaoffers");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/megaoffers/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...editForm, image_url: imageUrl }),
+  });
+
+  const data = await res.json();
+
+  setMegaOffers(prev =>
+    prev.map(o => (o.id === id ? data.product : o))
+  );
+
+  setEditingId(null);
+};
+
+const handleDeleteOffer = async (id) => {
+  if (!window.confirm("Delete this offer?")) return;
+
+  await fetch(`${API_BASE_URL}/api/megaoffers/${id}`, {
+    method: "DELETE",
+  });
+
+  setMegaOffers(prev => prev.filter(o => o.id !== id));
+};
 
   return (
     <div className="flex-1 p-10 flex justify-center items-center">
@@ -165,7 +215,7 @@ const [megaOfferLoading, setMegaOfferLoading] = useState(false);
                   : ""
               );
             }}
-            className="mb-4"
+              className="w-full border p-3 rounded-xl mb-4"
           />
 
           {productPreview && (
@@ -185,6 +235,112 @@ const [megaOfferLoading, setMegaOfferLoading] = useState(false);
 
         </div>
       )}
+
+      {activeForm === "megaoffer_list" && (
+  <section>
+     <h2 className="text-2xl font-bold mb-4 text-green-700">
+      Mega Offers List
+    </h2>
+
+    <div className="overflow-x-auto">
+      <table className="min-w-full border border-gray-300 rounded-lg">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border px-10 py-4">ID</th>
+            <th className="border px-10  py-2">Name</th>
+            <th className="border px-10 py-2">Category</th>
+            <th className="border px-10  py-2">Prices</th>
+            <th className="border px-10  py-2">Image</th>
+            <th className="border px-10 py-2">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {megaOffers.map((offer, index) => (
+            <tr key={offer.id}>
+              <td className="border px-4 py-2">{index + 1}</td>
+
+              <td className="border px-4 py-2">
+                {editingId === offer.id ? (
+                  <input
+                    value={editForm.name}
+                    onChange={e =>
+                      setEditForm({ ...editForm, name: e.target.value })
+                    }
+                    className="border p-1 w-full"
+                  />
+                ) : (
+                  offer.name
+                )}
+              </td>
+
+              <td className="border px-4 py-2">{offer.category_name}</td>
+
+              <td className="border px-4 py-2">
+                ₹{offer.offer_price} <br />
+                <span className="line-through text-gray-400">
+                  ₹{offer.price}
+                </span>
+              </td>
+
+              <td className="border px-4 py-2 text-center">
+                {editingId === offer.id ? (
+                  <>
+                    <input
+                      type="file"
+                      onChange={e => setEditImageFile(e.target.files[0])}
+                    />
+                    {(editImageFile || editForm.image_url) && (
+                      <img
+                        src={
+                          editImageFile
+                            ? URL.createObjectURL(editImageFile)
+                            : editForm.image_url
+                        }
+                        className="w-20 h-12 mx-auto mt-2"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <img
+                    src={offer.image_url}
+                    className="w-20 h-12 mx-auto"
+                  />
+                )}
+              </td>
+
+              <td className="border px-4 py-2 text-center">
+                {editingId === offer.id ? (
+                  <button
+                    onClick={() => handleUpdateOffer(offer.id)}
+                    className="bg-green-600 text-white px-3 py-1 rounded"
+                  >
+                    Save
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => startEditOffer(offer)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+                )}
+
+                <button
+                  onClick={() => handleDeleteOffer(offer.id)}
+                  className="bg-red-600 text-white px-3 py-1 rounded ml-2"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
+
     </div>
   );
 }

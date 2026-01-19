@@ -8,49 +8,57 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    setError("");
+const handleLogin = async () => {
+  setError("");
 
-    const emailTrim = email.trim();
-    const passwordTrim = password.trim();
+  const emailTrim = email.trim();
+  const passwordTrim = password.trim();
 
-    if (!emailTrim || !passwordTrim) {
-      setError("All fields are required.");
-      return;
-    }
+  if (!emailTrim || !passwordTrim) {
+    setError("All fields are required.");
+    return;
+  }
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailTrim, password: passwordTrim }),
-      });
+  try {
+    setLoading(true); 
 
-      const data = await res.json();
+    const res = await fetch(`${API_BASE_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailTrim, password: passwordTrim }),
+    });
 
-      if (res.ok) {
-        if (!data.user.role) {
-          setError("Role not assigned yet. Wait for admin to assign.");
-          return;
-        }
+    const data = await res.json();
 
-        
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        navigate("/admin");
-      } else {
-        setError(data.error);
+    if (res.ok) {
+      if (!data.user.role) {
+        setError("Role not assigned yet. Wait for admin to assign.");
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setError("Server error. Please try again later.");
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate("/admin");
+    } else {
+      setError(data.error || "Invalid credentials");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    setError("Server error. Please try again later.");
+  } finally {
+    setLoading(false); 
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4">
+       {loading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="w-16 h-16 border-4 border-green-200 border-t-green-700 rounded-full animate-spin"></div>
+        </div>
+      )}
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 sm:p-8 relative text-gray-800">
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-4 text-[#00713E] flex items-center justify-center gap-2">
           Login
@@ -83,11 +91,13 @@ export default function Login() {
         </div>
 
         <button
-          onClick={handleLogin}
-          className="w-full bg-[#00713E] hover:bg-[#00713E]/90 text-white py-2 rounded-lg font-semibold mb-3 text-sm sm:text-base"
-        >
-          Login
-        </button>
+  onClick={handleLogin}
+  disabled={loading}
+  className="w-full bg-[#00713E] hover:bg-[#00713E]/90 text-white py-2 rounded-lg font-semibold mb-3 disabled:opacity-50"
+>
+  {loading ? "Logging in..." : "Login"}
+</button>
+
 
         {/* <p className="text-center mt-4 text-sm sm:text-base text-gray-700">
           Don't have an account?{" "}

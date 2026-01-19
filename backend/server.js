@@ -13,15 +13,17 @@ import customerRoutes from './routes/customers.route.js'
 import megaofferRoutes from './routes/megaoffer.route.js'
 import BannerImagesRoutes from './routes/banner.route.js'
 import homeRoutes from './routes/home.route.js'
+import cartRoutes from './routes/cart.route.js'
+import DashboardRoutes from './routes/dashboad.route.js'
 dotenv.config();
 
 const app = express();
 app.use(cors({
   origin: [
 
-    // "http://localhost:5173"
-    "https://fruvvyadmin-1.onrender.com",
-  "https://fruvvyadmin.onrender.com"
+    "http://localhost:5173"
+    // "https://fruvvyadmin-1.onrender.com",
+  // "https://fruvvyadmin.onrender.com"
 
    ],
   credentials: true
@@ -49,7 +51,10 @@ app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
 app.use("/api", BannerImagesRoutes);
 app.use("/api", megaofferRoutes);
+app.use("/api",cartRoutes );
 app.use("/user", customerRoutes);
+app.use("/api",DashboardRoutes)
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {

@@ -205,6 +205,7 @@ const submitBanner = async () => {
           />
 
           <input
+
             type="file"
             accept="image/*"
             onChange={(e) => {
@@ -212,6 +213,7 @@ const submitBanner = async () => {
               setCategoryImage(file);
               setCategoryPreview(file ? URL.createObjectURL(file) : "");
             }}
+              className="w-full border p-3 rounded-xl mb-4"
           />
 
           {categoryPreview && (
@@ -296,7 +298,7 @@ const submitBanner = async () => {
               setProductImage(file);
               setProductPreview(file ? URL.createObjectURL(file) : "");
             }}
-            className="mb-4"
+            className="w-full border p-3 rounded-xl mb-4"
           />
 
           {productPreview && (
@@ -340,6 +342,7 @@ const submitBanner = async () => {
               setBannerImage(file);
               setBannerPreview(file ? URL.createObjectURL(file) : "");
             }}
+              className="w-full border p-3 rounded-xl mb-4"
           />
 
           {bannerPreview && (

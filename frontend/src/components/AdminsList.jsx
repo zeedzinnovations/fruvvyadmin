@@ -71,7 +71,7 @@ export default function AdminsList() {
       />
 
      <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+            <table className="min-w-full border border-gray-300 rounded-lg ">
               <thead className="bg-gray-100">
             <tr>
               <th className="border px-3 py-2">ID</th>
