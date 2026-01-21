@@ -21,6 +21,7 @@ import CustomerList from "../components/CustomerList";
 import MegaOffers from "../components/MegaOffers";
 import Dashboard from "../components/Dashboard";
 
+
 function SidebarItem({ icon: Icon, label, active, onClick }) {
   return (
     <li
@@ -39,10 +40,17 @@ function SidebarItem({ icon: Icon, label, active, onClick }) {
 }
 
 export default function Admin() {
+
   const user = JSON.parse(localStorage.getItem("user")) || {
     name: "Guest",
     role: "Admin",
   };
+
+const isSuperAdmin =
+  typeof user.role === "string" &&
+  ["superadmin", "super_admin"].includes(user.role.toLowerCase());
+
+
 
   const [activeView, setActiveView] = useState("dashboard");
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -53,7 +61,6 @@ export default function Admin() {
 
   const handleNavigation = (view, form = "") => {
     setLoading(true);
-
     setTimeout(() => {
       setActiveView(view);
       setActiveForm(form);
@@ -63,14 +70,13 @@ export default function Admin() {
 
   return (
     <div className="flex min-h-screen bg-[#F8FFFA] relative">
-      {/* Loader*/}
+     
       {loading && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="w-16 h-16 border-4 border-green-200 border-t-green-700 rounded-full animate-spin"></div>
         </div>
       )}
 
-     
       <aside className="w-72 bg-green-700 text-white p-5 flex flex-col justify-between">
         <div>
           <h1 className="text-xl bg-white text-green-700 py-3 rounded-xl flex justify-center gap-2 mb-6">
@@ -84,49 +90,54 @@ export default function Admin() {
               active={activeView === "dashboard"}
               onClick={() => handleNavigation("dashboard")}
             />
+       {isSuperAdmin && (
+              <>
+                <SidebarItem
+                  icon={FaUsers}
+                  label="Add User Admin"
+                  active={activeView === "signup"}
+                  onClick={() => handleNavigation("signup")}
+                />
 
-            <SidebarItem
-              icon={FaUsers}
-              label="Add User Admin"
-              active={activeView === "signup"}
-              onClick={() => handleNavigation("signup")}
-            />
+                <SidebarItem
+                  icon={PiUserListFill}
+                  label="List of Admins"
+                  active={activeView === "users"}
+                  onClick={() => handleNavigation("users")}
+                />
+              </>
+            )}
 
-            <SidebarItem
-              icon={PiUserListFill}
-              label="List of Admins"
-              active={activeView === "users"}
-              onClick={() => handleNavigation("users")}
-            />
-
+    
             <li>
               <div
                 onClick={() => setMegaOfferOpen(!megaOfferOpen)}
                 className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white hover:text-green-700 rounded-lg"
               >
-                <FaBullhorn/> Mega Offers
+                <FaBullhorn /> Mega Offers
                 <span className="ml-auto">
-                  {uploadOpen ? <RiArrowDropUpLine /> : <RiArrowDropDownLine />}
+                  {megaOfferOpen ? <RiArrowDropUpLine /> : <RiArrowDropDownLine />}
                 </span>
               </div>
 
               {megaOfferOpen && (
                 <ul className="ml-8 mt-2 space-y-2 text-sm">
-                 <li
-  onClick={() => handleNavigation("megaoffers", "megaoffer")}
-  className="cursor-pointer hover:text-green-300"
->
-  Upload Mega Offer
-</li>
-
-<li
-  onClick={() => handleNavigation("megaoffers", "megaoffer_list")}
-  className="cursor-pointer hover:text-green-300"
->
-  Mega Offers List
-</li>
-
-                 
+                  <li
+                    onClick={() =>
+                      handleNavigation("megaoffers", "megaoffer")
+                    }
+                    className="cursor-pointer hover:text-green-300"
+                  >
+                    Upload Mega Offer
+                  </li>
+                  <li
+                    onClick={() =>
+                      handleNavigation("megaoffers", "megaoffer_list")
+                    }
+                    className="cursor-pointer hover:text-green-300"
+                  >
+                    Mega Offers List
+                  </li>
                 </ul>
               )}
             </li>
@@ -145,6 +156,7 @@ export default function Admin() {
               onClick={() => handleNavigation("otp")}
             />
 
+          
             <li>
               <div
                 onClick={() => setCatalogOpen(!catalogOpen)}
@@ -186,7 +198,6 @@ export default function Admin() {
               )}
             </li>
 
-         
             <li>
               <div
                 onClick={() => setUploadOpen(!uploadOpen)}
@@ -226,7 +237,7 @@ export default function Admin() {
           </ul>
         </div>
 
-      
+        
         <div>
           <div className="bg-white text-green-700 p-3 rounded-md">
             <div className="font-semibold">{user.name}</div>
@@ -245,16 +256,23 @@ export default function Admin() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 p-8">
         {activeView === "dashboard" && <Dashboard />}
         {activeView === "otp" && <OtpAuth />}
         {activeView === "upload" && <Upload activeForm={activeForm} />}
         {activeView === "catalog" && <Catalog activeForm={activeForm} />}
         {activeView === "megaoffers" && <MegaOffers activeForm={activeForm} />}
-        {activeView === "signup" && <Signup />}
-        {activeView === "users" && <AdminsList />}
         {activeView === "customers" && <CustomerList />}
+
+        {activeView === "signup" && isSuperAdmin && <Signup />}
+        {activeView === "users" && isSuperAdmin && <AdminsList />}
+
+        {(activeView === "signup" || activeView === "users") &&
+          !isSuperAdmin && (
+            <div className="text-red-600 font-semibold text-lg">
+
+            </div>
+          )}
       </main>
     </div>
   );
