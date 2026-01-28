@@ -22,8 +22,8 @@ app.use(cors({
   origin: [
 
     // "http://localhost:5173"
-    "https://fruvvyadmin-1.onrender.com",
-  "https://fruvvyadmin.onrender.com"
+    // "https://fruvvyadmin-1.onrender.com",
+  // "https://fruvvyadmin.onrender.com"
 
    ],
   credentials: true
